@@ -4,7 +4,7 @@
  		
 		Lightweight Integrated Development Environment
 */
-#define VERSION 	"130a"
+#define VERSION 	"130_x11-1.5.8"
 /*		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
@@ -54,6 +54,13 @@
 #define FL_DLL
 #endif
 
+#if MSDOS
+#include <mwin/nano-X.h>
+extern "C" {
+void toggle_text_mode();
+}
+#endif
+
 /*
 //the following defines are intended to be set with -D in the makefile - gp
 USE_NXLIB
@@ -62,9 +69,7 @@ WITHHINTS //do not use that?
 FOR_NANOLINUX
 */
 
-
 #include "My_File_Browser.h"
-
 
 #include "globals.h"
 
@@ -73,9 +78,6 @@ FOR_NANOLINUX
 #include "EditorWindow.h"
 #include "debug.h"
 
-#if MSDOS
-#include <mwin/nano-X.h>
-#endif
   
 using namespace std;
 
@@ -213,6 +215,7 @@ void replall_cb(Fl_Widget*, void*);
 void replace2_cb(Fl_Widget*, void*);
 void replcan_cb(Fl_Widget*, void*);
 void generate_makefile_cb();
+void run_cb(Fl_Widget*, void*);
 
 
 deque <Nav_entry> funs;
@@ -702,8 +705,38 @@ void nav_name_cb(Fl_Widget *w, void *v) {
 
 
 void debug_cb(Fl_Widget *w, void *v) {
-	fl_message("Not yet implemented");
-	//debug(project.binfilename);
+
+#if MSDOS
+   string command;
+   //command = "runindos.bat gdb "+project.binfilename+".exe";
+   command = "gdb "+project.binfilename+".exe";
+   toggle_text_mode();
+   char *CurrWorkingDir = (char *)malloc(512);
+   getcwd(CurrWorkingDir,512);
+
+//   printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
+//   printf("%s\n",command.c_str());      
+   system((const char*)command.c_str());
+
+   chdir(CurrWorkingDir);
+   free(CurrWorkingDir);
+   toggle_text_mode();
+   return;
+#endif
+
+#ifdef USE_NXLIB
+	fl_message("Not yet implemented");//problem with overlapping console and fltk windows.
+    return;
+#endif
+
+run_cb(NULL,(void*)1); //run gdb
+
+#if WITHDEBUG
+	//gdb_start(project.binfilename);
+	//debug(project.binfilename);	
+#else
+	//fl_message("Not yet implemented");
+#endif
 }
 
 void file_source_cb(Fl_Widget *w, void *v) {
@@ -1056,7 +1089,11 @@ int  load_file(char *newfile, int ipos) {
   if(strncmp(newfile + strlen(newfile) - 4,".cxx",4) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 4,".hxx",4) == 0) cppfile = true;
 
+#if MSDOS
+  if(strncmp(newfile + strlen(newfile) - 6,".fld",4) == 0) {
+#else
   if(strncmp(newfile + strlen(newfile) - 6,".fldev",4) == 0) {
+#endif
 		project.pr_filename = newfile;
 		if(!project.load()) return 0;
 		project.addToBrowser(window->pr_browser);
@@ -1170,16 +1207,42 @@ void run_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
   string buf;
   string command;
+  int mode;
+  mode=(int)v;
   if(exec_running) {
 		fl_alert(strmsg[13].c_str());
 		return;
   }
   exec_running = true;
+#if MSDOS
+  command = "runindos.bat "+project.binfilename+".exe";
+#else
+if (mode==1) {
+  command = "gdb " + project.Bin + "/" + project.binfilename;
+} else {
   command = project.Bin + "/" + project.binfilename;
+}
+#endif
 
   if(command == "") (strmsg[14].c_str());
 
-  if(console_check->value()) {	
+#if MSDOS
+   toggle_text_mode();
+   char *CurrWorkingDir = (char *)malloc(512);
+   getcwd(CurrWorkingDir,512);
+
+//   printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
+//   printf("%s\n",command.c_str());      
+   system((const char*)command.c_str());
+
+   chdir(CurrWorkingDir);
+   free(CurrWorkingDir);
+   toggle_text_mode();
+   exec_running = false;
+   return;
+#endif
+
+  if(console_check->value() || mode==1) {	
 #ifdef USE_NXLIB
 	buf = "/usr/bin/deskapps/nxterm/nxterm " + command;
 #else
@@ -1204,7 +1267,21 @@ void run_cb(Fl_Widget* w, void* v) {
 void xterm_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
 #ifdef USE_NXLIB
-  ptr = popen("/usr/bin/deskapps/nxterm/nxterm &","r");
+  #if MSDOS
+   toggle_text_mode();
+   char *CurrWorkingDir = (char *)malloc(512);
+   getcwd(CurrWorkingDir,512);
+
+   printf("\n-> Please enter EXIT to return to FlDev <-\n\n");       
+   system("command.com");
+
+   chdir(CurrWorkingDir);
+   free(CurrWorkingDir);
+   toggle_text_mode();
+   return; //avoid pclose
+  #else
+    ptr = popen("/usr/bin/deskapps/nxterm/nxterm &","r");
+  #endif
 #else
   ptr = popen("xterm &","r");
 #endif
@@ -1479,9 +1556,31 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   outputtb->remove(0,outputtb->length());
   e->show_output();
   e->redraw();
+  
+#if MSDOS
+  if(mode==2) //compile
+  { 
+  	char *fname = strdup(filename_wo_path);
+  	char *name_wo_ext = fl_filename_setext(fname,".o");
+    sprintf(buf,"redir -e errorlog.mak -o makelog.mak make %s",name_wo_ext);     	
+  	if(fname) free(fname);
+  	//cout << buf << endl;
+  }
+  //make clean
+  else if(mode==1) sprintf(buf,"redir -e errorlog.mak -o makelog.mak make clean"); 
+  //make
+  else if(mode==0) sprintf(buf,"redir -e errorlog.mak -o makelog.mak make");   
+
+  else return;
+
+  system(buf); //output to errorlog.make, read into output window below as errors
+
+  ptr = fopen("makelog.mak","r"); //will be read below
+#else  
   ptr = popen("rm errorlog.make 2> /dev/null","r"); 
   pclose(ptr);
-  if(mode==2) 
+
+  if(mode==2) //compile
   { 
   	char *fname = strdup(filename_wo_path);
   	char *name_wo_ext = fl_filename_setext(fname,".o");
@@ -1489,16 +1588,19 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   	if(fname) free(fname);
   	//cout << buf << endl;
   }
-  else if(mode==1) sprintf(buf,"make clean 2> errorlog.make &");
+  //make clean
+  else if(mode==1) sprintf(buf,"make clean 2> errorlog.make &"); 
+  //make
   else if(mode==0) sprintf(buf,"make 2> errorlog.make &");
+
   else return;
+
   ptr = popen(buf,"r");
+#endif //MSDOS
   op_stylebuf->remove(0,op_stylebuf->length());
   
   op_stylebuf->append("AAAAA");
   outputtb->append("make:\n");
-
-
 
   int count=0; 
   while(fgets(buf,BUFSIZE,ptr) != NULL)
@@ -1509,9 +1611,19 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
 	Fl::check();
 	count++;
   } 
+#if MSDOS
+  fclose(ptr);
+#else  
   pclose(ptr);
+#endif
   outp="";
+//#endif //MSDOS
+  
+#if MSDOS
+  ptr = fopen("errorlog.mak","r");
+#else  
   ptr = fopen("errorlog.make","r");
+#endif
   erroutp = "";
   while(fgets(buf,BUFSIZE,ptr) != NULL)
   {
@@ -1857,10 +1969,10 @@ void open_pr_cb() {
   projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
   sprintf(projectdir,"%s/fldev/",homedir);
 
-#ifdef FOR_NANOLINUX
-  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev","/home/tc/fdev/");
+#if MSDOS
+  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fld",".");
 #else
-  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev",projectdir);
+  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev",projectdir,1);
 #endif
 
   free(projectdir);
@@ -1872,19 +1984,22 @@ void open_pr_cb() {
 
   char *dir = strdup(newfile);
   char *dirname = strrchr(dir,'/');
-  *dirname = '\0';
+  if (dirname != NULL) *dirname = '\0';
 
   if(fl_filename_isdir(dir))  
   {	
 		chdir(dir);
   }
   project.addToBrowser(window->pr_browser); 
-  load_file( (char *)window->pr_browser->text(1) , -1 );
+
   for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
   add_recent_project_to_menu(newfile);
   menubar->copy(menuitems, window);
-  
-  if(fl_choice(strmsg[6].c_str(),fl_no, fl_yes, 0)) generate_makefile_cb();  
+
+  if ((char *)window->pr_browser->text(1) != NULL){
+     load_file( (char *)window->pr_browser->text(1) , -1 );
+     if(fl_choice(strmsg[6].c_str(),fl_no, fl_yes, 0)) generate_makefile_cb();  
+  }
 
   free(dir);
 }
@@ -1897,6 +2012,9 @@ void save_pr_cb() {
 
 
 void new_pr_cb() {
+
+  char *tmpbuf;
+
   if (!check_save()) return;
   if(!check_project_save()) return;
   pr_wiz_ok = false;
@@ -1909,10 +2027,17 @@ void new_pr_cb() {
   
   project.name = trim(pr_name_input->value());
   project.pr_dir = trim(pr_dir_input->value());
+
+  tmpbuf = strdup(project.pr_dir.c_str());
+  if (tmpbuf[strlen(tmpbuf)-1] == '/') tmpbuf[strlen(tmpbuf)-1] = '\0';
+  project.pr_dir = tmpbuf;
+  free(tmpbuf);
+#if MSDOS
+  project.pr_filename = project.pr_dir + "/" + project.name + ".fld";
+#else  
   project.pr_filename = project.pr_dir + "/" + project.name + ".fldev";
-
-  char *tmpbuf = strdup(project.name.c_str());
-
+#endif
+  tmpbuf = strdup(project.name.c_str());
   for(int i = 0; i < strlen(tmpbuf); i++) {
 		if(isupper(*(tmpbuf+i))) *(tmpbuf+i) = tolower(*(tmpbuf+i));
   }
@@ -1922,17 +2047,20 @@ void new_pr_cb() {
   projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
   sprintf(projectdir,"%s/fldev/",homedir);
 
-
-
   project.binfilename = tmpbuf;
-#ifdef FOR_NANOLINUX
-  project.oDir = "/home/tc/fldev";
-  project.Bin = "/home/tc/fldev";
+#if MSDOS
+  project.oDir = ".";
+  project.Bin = ".";
 #else
   project.oDir = projectdir;
   project.Bin = projectdir;
 #endif
   if(x_app->value()) {
+#if MSDOS
+  	project.libs = "-lfltk -lfltk_images -lfltk_forms -lpng -lz -ljpeg -lNX11 -lnano-X -lfreetype -lm";
+  	project.libdirs = "-L/djgpp/lib";
+  	project.incdirs = "-I/djgpp/include";
+#else
 #if USE_NXLIB
   	project.libs = "-lNX11 -lnano-X -lfltk -lfltk_images -lfltk_forms -lpng -lz -ljpeg -lfreetype -lm";
   	project.libdirs = "-L/usr/local/lib";
@@ -1942,6 +2070,7 @@ void new_pr_cb() {
   	project.libdirs = "-L/usr/X11R6/lib";
   	project.incdirs = "-I/usr/X11R6/include";
 #endif
+#endif //MSDOS
 	project.run_in_console = false;
     console_check->value(0);
   }
@@ -2139,6 +2268,10 @@ void fb_showhidden_cb(Fl_Widget* o, void*)
 
 
 void show_help(const char *name) {
+#if MSDOS
+    return;
+#endif
+
   const char	*docdir;
   char		helpname[1024];
   
@@ -2166,6 +2299,10 @@ void show_help(const char *name) {
 
 int ask_for_download()
 {
+#if MSDOS
+    return 0;
+#endif
+
 	char *homedir = getenv("HOME");
 //	if(!fl_ask(strmsg[0].c_str())) return 0;
     if(!fl_choice(strmsg[0].c_str(),fl_no, fl_yes, 0)) return 0;
@@ -2224,6 +2361,9 @@ void show_ref(const char *name) {
 
   if (!help_dialog) help_dialog = new Fl_Help_Dialog();
 
+#if MSDOS
+  snprintf(helpname, sizeof(helpname), "%s/%s", ".", "cppref");  
+#else
   if ((docdir = getenv("CPP_REF_DOCDIR")) == NULL) {
 	free(docdir);
 	docdir = (char*)malloc((strlen(homedir)+strlen("/.cppref")+1)*sizeof(char));
@@ -2232,7 +2372,7 @@ void show_ref(const char *name) {
   //if(!fl_filename_isdir(docdir)) if(!ask_for_download()) return;
   if(!fl_filename_isdir(docdir)) return; //just return if no .cppref dir
   snprintf(helpname, sizeof(helpname), "%s/%s", docdir, name);  
-
+#endif
   help_dialog->load(helpname);
   help_dialog->resize(help_dialog->x(),help_dialog->y(),760,540);
   help_dialog->show();
@@ -2344,7 +2484,11 @@ void load_language_file()
 	char buf[255],line[255];
 	int mode=0;
 	char *homedir = getenv("HOME");
+#if MSDOS
+	sprintf(buf,"fldev.lng");
+#else
 	sprintf(buf,"%s/.fldev_lng",homedir);
+#endif
 	FILE *ptr = fopen(buf,"r");
 
 	char *lineorig, *linetrans;
@@ -2632,12 +2776,21 @@ void load_lang_cb(char *file)
 	char *homedir = getenv("HOME");
 	char buf[255];
 	
+#if MSDOS
+	if(file==NULL){
+		unlink("fldev.lng");
+	} else {
+		sprintf(buf,"copy %s fldev.lng",file);
+        system(buf);
+    }
+#else	
 	if(file==NULL)
 		sprintf(buf,"rm %s/.fldev_lng",homedir);
 	else
 		sprintf(buf,"cp %s %s/.fldev_lng",file,homedir);
 	FILE *ptr = popen(buf,"r");
 	pclose(ptr);
+#endif
 	fl_message(strmsg[10].c_str());
 }
 
@@ -2747,7 +2900,7 @@ void recent_project_cb(Fl_Widget* w, void *v)
 		char *dir = strdup(newfile);
  
 		  char *dirname = strrchr(dir,'/');
-		  *dirname = '\0';
+		  if (dirname != NULL) *dirname = '\0';
 
 		  if(fl_filename_isdir(dir))  
 		  {
@@ -2958,13 +3111,13 @@ void tile_resize(Fl_Widget *w, void *v)
 
 
 Fl_Window* make_form() {
-    EditorWindow* w = new EditorWindow(660, 400, title);
+    EditorWindow* w = new EditorWindow(800, 600, title);
     window = w;
 	int pr_browsersize = 180;
 	//int tabs_size = 150;
     w->begin();
 
-    menubar = new Fl_Menu_Bar(0, 0, 660, 25);    
+    menubar = new Fl_Menu_Bar(0, 0, w->w(), 25); 
 	menuitems[27].set();
   	menuitems[28].set();	
     menubar->copy(menuitems, w);
@@ -2975,7 +3128,7 @@ Fl_Window* make_form() {
 	
 	/////////////////////////////////////////////////////////////////////
 	//SmartIcons
-	smartbar = new Fl_Group(0,25,660,25);
+	smartbar = new Fl_Group(0,25,w->w(),25);
 	smartbar->box(FL_THIN_UP_BOX);
 	int temp_space = 0, ts_size = 10;
 	smartbar->begin();
@@ -3134,11 +3287,11 @@ Fl_Window* make_form() {
 
 	
 	//maintile = new Fl_Tile(0,50, 660, 333);
-	all_but_menu_grp = new My_Group_wo_Nav(0,50, 660, 333);
+	all_but_menu_grp = new My_Group_wo_Nav(0,50, w->w(), 533); //333);
 	
 
 	{
-		output_grp = new Fl_Group(0,50+233+1,660,99);
+		output_grp = new Fl_Group(0,50+233+1,w->w(),99);
 		Fl_Tabs *ttab = new Fl_Tabs(output_grp->x(),output_grp->y()+7,output_grp->w(),output_grp->h()-6);
 		Fl_Group *tgrp = new Fl_Group(output_grp->x(),output_grp->y()+7+15,output_grp->w(),output_grp->h()-6-15,"Output");
 		
@@ -3154,7 +3307,7 @@ Fl_Window* make_form() {
 		    
 		tgrp->labelsize(10);
 		tgrp->end();
-		
+#if 0		
 		Fl_Group *tdgrp = new Fl_Group(tgrp->x(),tgrp->y(),tgrp->w(),tgrp->h(),"Debug");
 		tdgrp->labelsize(10);
 		
@@ -3189,11 +3342,12 @@ Fl_Window* make_form() {
 	    	}
 	    	
 	    	
-		tdgrp->deactivate();    
+		//tdgrp->deactivate();    
 		
 		
 		tdgrp->resizable(NULL);
 		tdgrp->end();
+#endif
 		ttab->resizable(tgrp);
 		ttab->end();
 		
@@ -3208,9 +3362,9 @@ Fl_Window* make_form() {
 	
 	
 	//Fl_Tile *
-	tile = new My_Tile_wo_Nav(0,50, 660, 233);
+	tile = new My_Tile_wo_Nav(0,50, w->w(), 233);
 	
-	gwn = new My_Group_wo_Nav(pr_browsersize, 50, 660-pr_browsersize, 233);
+	gwn = new My_Group_wo_Nav(pr_browsersize, 50, w->w()-pr_browsersize, 233);
 		
 		Fl_Box *line_nr_box = new Fl_Box(gwn->x(),50,line_nr_size,gwn->h());
 		line_nr_box->box(FL_DOWN_BOX);
@@ -3220,7 +3374,7 @@ Fl_Window* make_form() {
 		line_nr_box->label("1\n2");
 		w->line_nr_box = line_nr_box;
 		
-	    w->editor = new Fl_Text_Editor_ext(gwn->x()+line_nr_size, 50, 660-pr_browsersize-line_nr_size, 233);	//edited
+	    w->editor = new Fl_Text_Editor_ext(gwn->x()+line_nr_size, 50, w->w()-pr_browsersize-line_nr_size, 233);	//edited
 			te = w->editor;	
 		    w->editor->buffer(textbuf);
 		    w->editor->highlight_data(stylebuf, styletable,
@@ -3336,12 +3490,12 @@ Fl_Window* make_form() {
     w->resizable(tile);
     
     
-  	w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,384,615,16,"Zeile 1"); 
+  	w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,w->h()-16,w->w()-45,16,"Zeile 1"); 
     w->statusbar->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     w->statusbar->labelsize(10);
     w->callback((Fl_Callback *)quit_cb, w);    
 
-    w->outputwindowbutton = new Fl_Button(620,384,40,16,"Output");
+    w->outputwindowbutton = new Fl_Button(w->w()-40,w->h()-16,40,16,"Output");
     w->outputwindowbutton->callback(owbt_callback);
     w->outputwindowbutton->visible_focus(0);
     w->outputwindowbutton->labelsize(10);

@@ -142,8 +142,11 @@ void generate_makefile_cb()
 
 		fprintf(ptr,"\n#@# Dependency rules follow -----------------------------\n");
 		fprintf(ptr,"$(Bin)/%s: $(EXOBJS)\n",	project.binfilename.c_str());
-		fprintf(ptr,"\t$(LD) -o $(Bin)/%s $(EXOBJS) $(incDirs) $(libDirs) $(LD_FLAGS) $(LIBS)\n",	project.binfilename.c_str());
-
+#if MSDOS
+		fprintf(ptr,"\t$(LD) $(LD_FLAGS) -o $(Bin)/%s.exe $(EXOBJS) $(incDirs) $(libDirs) $(LIBS)\n",	project.binfilename.c_str());
+#else		
+		fprintf(ptr,"\t$(LD) $(LD_FLAGS) -o $(Bin)/%s $(EXOBJS) $(incDirs) $(libDirs) $(LIBS)\n",	project.binfilename.c_str());
+#endif
 		char *src_files = strdup(sourcefiles.c_str());
 		char *fname;
 

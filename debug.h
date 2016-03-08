@@ -17,20 +17,4 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#include <string>
-
-using namespace std;
-
-
-
-int write_gdb(string str);
-string read_gdb();
-pid_t debug(string file);
-
-int gdb_break_cb(int line, string filename);
-int gdb_run_cb();
-int gdb_step_cb();
-int gdb_next_cb();
-int gdb_kill_cb();
-
 #endif

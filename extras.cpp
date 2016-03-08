@@ -189,7 +189,11 @@ void Project::save() {
 
 	char buf[255];
 	int BUFSIZE=255;
+#if MSDOS
+	sprintf(buf,"%s.fld",name.c_str());
+#else	
 	sprintf(buf,"%s.fldev",name.c_str());
+#endif
 	FILE *ptr = fopen(buf,"w");
 	run_in_console = console_check->value();
 	if(ptr != NULL) 

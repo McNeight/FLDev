@@ -39,6 +39,7 @@ Fl_Double_Window* make_proj_wizard() {
   { Fl_Double_Window* o = proj_wiz = new Fl_Double_Window(503, 248, "New Project");
     w = o;
     pr_dir_input = new Fl_Input(130, 65, 320, 25, "Project Directory");
+    pr_dir_input->insert(".",1);
     { Fl_Button* o = pr_wiz_browse_btn = new Fl_Button(450, 65, 35, 25, "...");
       o->callback((Fl_Callback*)cb_pr_wiz_browse_btn);
     }
