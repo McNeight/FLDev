@@ -34,6 +34,7 @@
 #include <stdio.h>
 
 extern string get_load_err_msg();
+extern bool auto_brace_mode;
 
 string trim(string const& source, char const* delims) {
   std::string result(source);
@@ -51,6 +52,19 @@ string trim(string const& source, char const* delims) {
 
 
 
+//redefine Group and tile to remove keyboard navigation
+int My_Group_wo_Nav::handle(int event) {
+	if(event == FL_KEYBOARD) return 0;
+	else return Fl_Group::handle(event);
+}
+
+
+int My_Tile_wo_Nav::handle(int event) {
+	if(event == FL_KEYBOARD) return 0;
+	else return Fl_Tile::handle(event);
+}
+
+
 
 	
 void build_template_main() {
@@ -60,11 +74,23 @@ void build_template_main() {
 		FILE *ptr = fopen(buf,"w");
 		if(ptr != NULL) 
 		{
-			fprintf(ptr,"#include <iostream>\nusing namespace std;\n\n\n\nint main(int argc, char *argv[])\n{\n\tcout << \"Hello World!\\n\";\n\treturn 0;\n}\n");
+			fprintf(ptr,"#include <iostream>\n\nusing namespace std;\n\n\n\nint main(int argc, char *argv[])\n{\n\tcout << \"Hello World!\\n\";\n\treturn 0;\n}\n");
 			fclose(ptr);
 		}
 }
 
+
+int create_file(const char *file)
+{	
+		FILE *ptr = fopen(file,"w");
+		if(ptr != NULL) 
+		{
+			
+			fclose(ptr);
+			return 1;
+		}
+		return 0;
+}
 
 
 void File_History::add(string fname, int pos) {
@@ -99,9 +125,13 @@ int File_History::getPosition(string fname) {
 
 
 
-void Project::addToBrowser(Fl_Hold_Browser *b) {
+void Project::addToBrowser(Fl_File_Browser *b) {
 	b->clear();
-
+	
+	Fl_File_Icon *icon;
+	
+    icon = Fl_File_Icon::find("*.cpp", Fl_File_Icon::PLAIN);
+    
 	char *tmp_src_files = strdup(src_files.c_str());
 	while(src_files!="")
 	{			
@@ -111,12 +141,15 @@ void Project::addToBrowser(Fl_Hold_Browser *b) {
 
 		char fn[255];
 	
+      
 		sprintf(fn,"%s.%s",first,fname);
-		if(fn!=NULL && fn!="") b->add(fn);
+		if(fn!=NULL && fn!="") b->add(fn,icon);
 	
 		if(tmp_src_files == NULL || tmp_src_files == "") break;
 	}
-
+	
+    icon = Fl_File_Icon::find("*.h", Fl_File_Icon::PLAIN);
+    
 	char *tmp_hdr_files = strdup(header_files.c_str());
 	while(header_files!="")
 	{			
@@ -127,9 +160,26 @@ void Project::addToBrowser(Fl_Hold_Browser *b) {
 		char fn[255];
 	
 		sprintf(fn,"%s.%s",first,fname);
-		if(fn!=NULL && fn!="") b->add(fn);
+		if(fn!=NULL && fn!="") b->add(fn,icon);
 	
 		if(tmp_hdr_files == NULL || tmp_hdr_files == "") break;
+	}
+	
+    icon = Fl_File_Icon::find("*.fl", Fl_File_Icon::PLAIN);    
+	
+	char *tmp_gui_files = strdup(gui_files.c_str());
+	while(gui_files!="")
+	{			
+		char *fname = strsep(&tmp_gui_files," ");
+
+		char *first = strsep(&fname,".");
+
+		char fn[255];
+	
+		sprintf(fn,"%s.%s",first,fname);
+		if(fn!=NULL && fn!="") b->add(fn,icon);
+	
+		if(tmp_gui_files == NULL || tmp_gui_files == "") break;
 	}
 }
 
@@ -144,7 +194,7 @@ void Project::save() {
 	run_in_console = console_check->value();
 	if(ptr != NULL) 
 	{
-		fprintf(ptr,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n", 
+		fprintf(ptr,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%s\n", 
 					name.c_str(),
 					binfilename.c_str(),
 					oDir.c_str(),
@@ -156,7 +206,8 @@ void Project::save() {
 					cflags.c_str(),
 					run_in_console,
 					src_files.c_str(),
-					header_files.c_str()
+					header_files.c_str(),
+					gui_files.c_str()
 				);
 		fclose(ptr);
 		modified=false;
@@ -169,7 +220,7 @@ int Project::load() {
 	sprintf(buf,"%s",pr_filename.c_str());
 	FILE *ptr = fopen(buf,"r");
 
-	char aname[255], abinf[255], aodir[255], abin[255], alibs[255], alibd[255], ainc[255], ald[255], ac[255], asrc[255], ahdr[255], acons[255];
+	char aname[255], abinf[255], aodir[255], abin[255], alibs[255], alibd[255], ainc[255], ald[255], ac[255], asrc[255], ahdr[255], agui[255], acons[255];
 	if(ptr != NULL) 
 	{
 		fgets(aname,255,ptr);
@@ -183,7 +234,8 @@ int Project::load() {
 		fgets(ac,255,ptr);
 		fgets(acons,255,ptr);
 		fgets(asrc,255,ptr);
-		fgets(ahdr,255,ptr);
+		fgets(ahdr,255,ptr);		
+		char *guil = fgets(agui,255,ptr);
 
 					
 		name = trim(aname);
@@ -196,13 +248,16 @@ int Project::load() {
 		ldflags = trim(ald);
 		cflags = trim(ac);
 		src_files = trim(asrc);
-		header_files = trim(ahdr);
+		header_files = trim(ahdr);		
+		if(guil) gui_files = trim(agui);
+		else gui_files = "";
 		sscanf(acons,"%d",&run_in_console);
 					
 		pname->value(name.c_str());
 		ptarg->value(binfilename.c_str());
 		psrc->value(src_files.c_str());
 		phdr->value(header_files.c_str());
+		pgui->value(gui_files.c_str());
 		pobdir->value(oDir.c_str());
 		pbin->value(Bin.c_str());
 		plib->value(libs.c_str());
@@ -238,6 +293,8 @@ int Fl_Text_Editor_ext::handle(int event) {
 
 
   if(event==FL_KEYBOARD) {
+  	  //int key = Fl::event_key(), state = Fl::event_state(), c = Fl::event_text()[0];
+  	  //if(key == 'f' && state == FL_CTRL) return parent()->parent()->parent()->handle(event);
       return handle_key_ext();
   }
   
@@ -246,7 +303,7 @@ int Fl_Text_Editor_ext::handle(int event) {
 }
 
 
-
+bool autobrace;
 
 int Fl_Text_Editor_ext::handle_key_ext() {
   
@@ -258,6 +315,10 @@ int Fl_Text_Editor_ext::handle_key_ext() {
     if (Fl::event_length()) {
       if (insert_mode()) {
 			insert(Fl::event_text());
+			if(strcmp(Fl::event_text(),"{")==0 && auto_brace_mode) {
+				autobrace = true;
+			  }
+			  else autobrace = false;
 		}
       else overstrike(Fl::event_text());
     }
@@ -271,7 +332,10 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 
   int key = Fl::event_key(), state = Fl::event_state(), c = Fl::event_text()[0];
   state &= FL_SHIFT|FL_CTRL|FL_ALT|FL_META; // only care about these states
-
+  
+  
+  
+  
   if(Fl::event_key()==FL_Enter && smart_indent) {
 	char *line = "";
 	line = strdup(buffer()->line_text(insert_position()));
@@ -280,8 +344,19 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 	}
 	kf_enter(c,this);
   	insert(line); 
+  	
+  	if(autobrace) {
+  		int inspos = insert_position();
+  		kf_enter(c,this);
+  		insert(line); 
+  		insert("}");
+  		insert_position(inspos);
+  		insert("\t");
+  	}
+  	autobrace = false;
 	return 1;
   }
+  
 
   else if(Fl::event_key()==FL_Home) {
 	int pos;
@@ -305,6 +380,13 @@ int Fl_Text_Editor_ext::handle_key_ext() {
   if (default_key_function_ && !state) return default_key_function_(c, this);
   return 0;
 
+}
+
+
+void Fl_Text_Editor_ext::get_line_nrs(int *first_line, int *last_line)
+{
+	*first_line = get_absolute_top_line_number();
+	*last_line = *first_line + mNVisibleLines ;//textD->nVisibleLines;	
 }
 
 

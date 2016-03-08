@@ -3,6 +3,7 @@
 #ifndef proj_form_h
 #define proj_form_h
 #include <FL/Fl.H>
+#include "globals.h"
 extern int pr_changed;
 #include <FL/Fl_Double_Window.H>
 extern Fl_Double_Window *project_options_window;
@@ -26,6 +27,7 @@ extern Fl_Input *pldflags;
 extern Fl_Group *pr_op_fi_grp;
 extern Fl_Input *psrc;
 extern Fl_Input *phdr;
+extern Fl_Input *pgui;
 #include <FL/Fl_Button.H>
 Fl_Double_Window* make_proj_window();
 #endif

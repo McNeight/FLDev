@@ -3,9 +3,9 @@
 		FLDev
 		
 		Lightweight Integrated Development Environment
-
-		version:	0.5.6
-		author:		Philipp Pracht
+*/
+#define VERSION 	"0.5.7"
+/*		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
 		descr.:	FLDev is a IDE designed for older systems and small C/C++ Applications
@@ -29,12 +29,13 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
- 
+
 
 // TODO:
 /*
 		make better comments
 		debugging function
+		improve navigator
 */
 
 #include <stdlib.h>
@@ -47,7 +48,6 @@
 #include <iostream>
 #include <deque>
 #include <X11/xpm.h>
-#include "fldevicon.xpm"
 #include "icon_pixmaps.h"
 
 #ifdef __MWERKS__ 
@@ -55,63 +55,36 @@
 #endif
 
 
-#include <FL/Fl.H>
-#include <FL/x.H>
 
-#include <FL/Fl_Group.H>
-#include <FL/Fl_Double_Window.H>
-#include <FL/fl_ask.H>
-#include <FL/Fl_File_Chooser.H>
-#include <FL/Fl_Menu_Bar.H> 
-#include <FL/Fl_Input.H>
-#include <FL/Fl_Tabs.H>
-#include <FL/Fl_Button.H>
-#include <FL/Fl_Hold_Browser.H>
-#include <FL/Fl_Check_Button.H>
-#include <FL/Fl_Return_Button.H>
-#include <FL/Fl_Text_Buffer.H>
-#include <FL/Fl_Scrollbar.H>
-#include <FL/Fl_Text_Editor.H>
-#include <FL/Fl_Multiline_Output.H>
-#include <FL/Fl_Help_Dialog.H>
+#include "My_File_Browser.h"
 
 
-#include "pref_form.h"
-#include "proj_form.h"
-#include "proj_wiz_form.h"
-#include "extras.h" 
+#include "globals.h"
 
-#define STR_MSG_SIZE 20
+#include "highlight.h"
+#include "build_tools.h"
+#include "EditorWindow.h"
+#include "debug.h"
+
+
   
 using namespace std;
 
-class EditorWindow;
 
-
-int				rec_pr_menu_index = 45;
+int				rec_pr_menu_index = 49;
 int                bufchanged = 0;
 char               filename[256] = "";
 char               filename_wo_path[256] = "";
 char               title[256], usrdocdir[256];  
-bool hidden = true, cppfile, filelistopen=false, make_error = false, exec_running = false;
-int linecount;
+bool hidden = true, cppfile, filelistopen=false, make_error = false, exec_running = false, nav_expand = false, show_line_nrs = false;
+int linecount, update_count;
 int num_windows = 0;
 int loading = 0;
+int nav_sort = 0;
+int show_nav = 0;
+int line_nr_size = 50;
 
 
-//Editor colors
-Fl_Color hl_plain = FL_BLACK;
-Fl_Color hl_linecomment = FL_DARK_GREEN;
-Fl_Color hl_blockcomment = FL_DARK_GREEN;
-Fl_Color hl_string = FL_BLUE;
-Fl_Color hl_directive = FL_DARK_MAGENTA;
-Fl_Color hl_type = FL_DARK_RED;
-Fl_Color hl_keyword = FL_BLUE;
-Fl_Color hl_character = FL_DARK_RED;
-Fl_Color background_color = FL_WHITE;
-
-Fl_Text_Editor_ext 		*te;
-Fl_Text_Buffer     *textbuf = 0;
 Fl_Text_Buffer     *outputtb = 0;
 Project project;
 File_History *file_hist;
@@ -119,22 +92,52 @@ Fl_Menu_Bar* menubar;
 Fl_Help_Dialog *help_dialog;
 EditorWindow* window;
 Fl_Group *smartbar;
+Fl_Group *output_grp;
+Fl_Tile *tile;
+deque <string> bakfiles;
 
-void set_title(Fl_Window* w);
-void add_recent_file_to_menu(char *filename);
-void add_recent_project_to_menu(char *filename);
-void save_config_file();
-void set_text_size(int t);
-int check_save();
-int load_file(char *,int);
-void replace_text_in_menu(int index, char *newtext);
-
-Fl_Window* make_form();
+NavBrowser *navigator_browser;
 
 
+Fl_Group *browser_file_grp, *browser_nav_grp;
+My_Group_wo_Nav *all_but_menu_grp;
+Fl_Menu_Button *navigator_pop_btn, *fb_pop_btn, *file_pop_btn;
+My_Group_wo_Nav *gwn;
+
+
+
+Fl_Text_Display::Style_Table_Entry
+           op_styletable[] = {	// Style table
+		     { FL_BLACK,      FL_HELVETICA, TEXTSIZE }, 	// A - Plain
+		     { FL_RED, 		  FL_HELVETICA, TEXTSIZE } 	// B - Error
+		   };
+
+My_Text_Display::Style_Table_Entry
+                   styletable[] = {	// Style table
+		     { hl_plain,      FL_COURIER,        TEXTSIZE }, // A - Plain
+		     { hl_linecomment, FL_COURIER_ITALIC, TEXTSIZE }, // B - Line comments
+		     { hl_blockcomment, FL_COURIER_ITALIC, TEXTSIZE }, // C - Block comments
+		     { hl_string,       FL_COURIER,        TEXTSIZE }, // D - Strings
+		     { hl_directive,   FL_COURIER,        TEXTSIZE }, // E - Directives
+		     { hl_type,   FL_COURIER_BOLD,   TEXTSIZE }, // F - Types
+		     { hl_keyword,       FL_COURIER_BOLD,   TEXTSIZE }, // G - Keywords
+		     { hl_character,    FL_COURIER,        TEXTSIZE }  // H - Character
+		   };
+
+
+//File Icon defs
+enum				// Data opcodes
+{
+  END,			// End of primitive/icon
+  COLOR,			// Followed by color value (2 shorts)
+  LINE,			// Start of line
+  CLOSEDLINE,			// Start of closed line
+  POLYGON,			// Start of polygon
+  OUTLINEPOLYGON,		// Followed by outline color (2 shorts)
+  VERTEX			// Followed by scaled X,Y
+};
+  
 //the strings that are translated
-
-
 //Main Mode
 string file_str="File", 
 		mod_str = "modified", 
@@ -147,6 +150,7 @@ string file_str="File",
 	  	discard_str="Discard";
 
 string strmsg[STR_MSG_SIZE];
+string line_label_str;
 
 void init_strings()
 {    
@@ -185,6 +189,8 @@ void save_pr_cb();
 void new_pr_cb();
 void pref_cb(Fl_Widget*, void*);
 void show_browser_cb();
+void show_linenrs_cb();
+void show_nav_cb();
 void generate_makefile_cb();
 void b_cb(Fl_Widget* o, void*);
 void manual_cb(Fl_Widget *, void *);
@@ -199,503 +205,610 @@ void replcan_cb(Fl_Widget*, void*);
 void generate_makefile_cb();
 
 
-
-// Syntax highlighting stuff...
-Fl_Text_Buffer     *stylebuf = 0;
-Fl_Text_Buffer		*op_stylebuf = 0;
-
-#define TEXTSIZE 10
-
-Fl_Text_Display::Style_Table_Entry
-           op_styletable[] = {	// Style table
-		     { FL_BLACK,      FL_HELVETICA, TEXTSIZE }, 	// A - Plain
-		     { FL_RED, 		  FL_HELVETICA, TEXTSIZE } 	// B - Error
-		   };
-
-My_Text_Display::Style_Table_Entry
-                   styletable[] = {	// Style table
-		     { hl_plain,      FL_COURIER,        TEXTSIZE }, // A - Plain
-		     { hl_linecomment, FL_COURIER_ITALIC, TEXTSIZE }, // B - Line comments
-		     { hl_blockcomment, FL_COURIER_ITALIC, TEXTSIZE }, // C - Block comments
-		     { hl_string,       FL_COURIER,        TEXTSIZE }, // D - Strings
-		     { hl_directive,   FL_COURIER,        TEXTSIZE }, // E - Directives
-		     { hl_type,   FL_COURIER_BOLD,   TEXTSIZE }, // F - Types
-		     { hl_keyword,       FL_COURIER_BOLD,   TEXTSIZE }, // G - Keywords
-		     { hl_character,    FL_COURIER,        TEXTSIZE }  // H - Character
-		   };
+deque <Nav_entry> funs;
+deque <Nav_entry> classes;
+deque <Nav_entry> structs;
+deque <Nav_entry> enums;
+deque <Nav_entry> unions;
 
 
-
-const char         *code_keywords[] = {	// List of known C/C++ keywords...
-		     "and",
-		     "and_eq",
-		     "asm",
-		     "bitand",
-		     "bitor",
-		     "break",
-		     "case",
-		     "catch",
-		     "compl",
-		     "continue",
-		     "default",
-		     "delete",
-		     "do",
-		     "else",
-		     "false",
-		     "for",
-		     "goto",
-		     "if",
-		     "new",
-		     "not",
-		     "not_eq",
-		     "operator",
-		     "or",
-		     "or_eq",
-		     "return",
-		     "switch",
-		     "template",
-		     "this",
-		     "throw",
-		     "true",
-		     "try",
-		     "using",
-		     "while",
-		     "xor",
-		     "xor_eq"
-		   };
-const char         *code_types[] = {	// List of known C/C++ types...
-		     "auto",
-		     "bool",
-		     "char",
-		     "class",
-		     "const",
-		     "const_cast",
-		     "double",
-		     "dynamic_cast",
-		     "enum",
-		     "explicit",
-		     "extern",
-		     "float",
-		     "friend",
-		     "inline",
-		     "int",
-		     "long",
-		     "mutable",
-		     "namespace",
-		     "private",
-		     "protected",
-		     "public",
-		     "register",
-		     "short",
-		     "signed",
-		     "sizeof",
-		     "static",
-		     "static_cast",
-		     "struct",
-		     "template",
-		     "typedef",
-		     "typename",
-		     "union",
-		     "unsigned",
-		     "virtual",
-		     "void",
-		     "volatile"
-		   };
-
-//
-// 'compare_keywords()' - Compare two keywords...
-//
-int
-compare_keywords(const void *a,
-                 const void *b) {
-  return (strcmp(*((const char **)a), *((const char **)b)));
-}
-
-
-//
-// 'style_parse()' - Parse text and produce style data.
-//
-//
-void
-style_parse(const char *text,
-            char       *style,
-	    int        length) {
-  char	     current; 
-  int	     last;
-  char	     buf[255],
-             *bufptr;
-  const char *temp; 
-
-  if(!cppfile) return;
-
-  for (current = *style, last = 0; length > 0; length --, text ++) {
-    
-    //if ((current != 'C') && (current != 'D') && (current != 'E')) current = 'A';
-    //if ((current == 'B')) current = 'A';
-  
-    if (current == 'A') {
-      // Check for directives, comments, strings, and keywords...
-      	if (*text == '#') {
-        	// Set style to directive
-	        current = 'E';
-	} 
-
-	else if (strncmp(text, "//", 2) == 0) {
-	        current = 'B';
-		for (; length > 0 && *text != '\n'; length --, text ++) *style++ = 'B';
-
-	        if (length == 0) break;
-      	} 
-
-	else if (strncmp(text, "/*", 2) == 0) {
-        	current = 'C';
-		*style++ = current;
-		*style--;
-	} 
-
-	else if (strncmp(text, "\\\"", 2) == 0) {
-	        // Quoted quote...
-		*style++ = current;
-		*style++ = current;
-		text ++;
-		length --;
-		continue;
-      	} 
-
-	else if (*text == '\"' /*| *text == '\''*/) {
-        	current = 'D';
-      	} 
-
-	else if (*text == '\'') {
-        	current = 'H';
-      	} 
-
-	else if (!last && islower(*text)) {
-        	// Might be a keyword...
-		for (temp = text, bufptr = buf; (isalnum(*temp) || *temp=='_') && bufptr < (buf + sizeof(buf) - 1); *bufptr++ = *temp++);
-		        if (!islower(*temp)) {
-				*bufptr = '\0';
-				bufptr = buf;
-
-				if (bsearch(&bufptr, code_types, sizeof(code_types) / sizeof(code_types[0]), sizeof(code_types[0]), compare_keywords)) {
-					while (text < temp) {
-				  		*style++ = 'F';
-						text ++;
-		      				length --;
-					}
-
-	    				text --;
-	    				length ++;
-	    				last = 1;
-	    				continue;
-	  			} else if (bsearch(&bufptr, code_keywords, sizeof(code_keywords) / sizeof(code_keywords[0]), sizeof(code_keywords[0]), compare_keywords)) {
-	    				while (text < temp) {
-	      					*style++ = 'G';
-	      					text ++;
-	      					length --;
-	    				}
-
-	    				text --;
-	    				length ++;
-	    				last = 1;
-	    				continue;
-	  			}
-			}
-      		}
-    	} else if (current == 'C' && strncmp(text, "*/", 2) == 0) {
-      	// Close a C comment... 
-
-	      	*style++ = current;
-      		*style++ = current;
-	      	text ++;
-      		length --;
-	      	current = 'A';
-      		continue;
-    	} else if (current == 'D') {
-      	// Continuing in string...
-      		if (strncmp(text, "\\\"", 2) == 0 || strncmp(text, "\\\'", 2) == 0) {
-        	// Quoted end quote...
-			*style++ = current; 
-			*style++ = current;
-			text ++;
-			length --;
-			continue;
-      		} else if (*text == '\"'/* || *text == '\''*/) {
-        	// End quote...
-			*style++ = current;
-			current = 'A';
-			continue;
-      		}
-    	} else if (current == 'H') {
-      	// Continuing in char...
-      		if (*text == '\'') {
-        	// End quote...
-			*style++ = current;
-			current = 'A';
-			continue;
-      		}
-    	}
-
-
-    	// Copy style info...
-    	if (current == 'A' && (*text == '{' || *text == '}')) *style++ = 'G';
-    	else *style++ = current;
-
-    	last = isalnum(*text) || *text == '.';
-
-    	if (*text == '\n') {
-      	// Reset column and possibly reset the style
-      		if (current != 'D' && current != 'C') current = 'A';
-    	}
-
-  } //for
-}
-
-
-//
-// 'style_init()' - Initialize the style buffer...
-//
-
-void
-style_init(void) {
-  char *style = new char[textbuf->length() + 1];
-  char *text = textbuf->text();
-  
-
-  memset(style, 'A', textbuf->length());
-  style[textbuf->length()] = '\0';
-
-  if (!stylebuf) stylebuf = new Fl_Text_Buffer(textbuf->length());
-
-  if(cppfile) style_parse(text, style, textbuf->length());
-
-  stylebuf->text(style);
-  delete[] style;
-  free(text);
-}
-
-
-//
-// 'style_unfinished_cb()' - Update unfinished styles.
-//
-
-void
-style_unfinished_cb(int, void*) {
-}
-
-
-//
-// 'style_update()' - Update the style buffer...
-//
-
-void
-style_update(	int        pos,		// I - Position of update
-             	int        nInserted,	// I - Number of inserted chars
-	     		int        nDeleted,	// I - Number of deleted chars
-             	int        /*nRestyled*/,	// I - Number of restyled chars
-	     		const char * /*deletedText*/,// I - Text that was deleted
-             	void       *cbArg) {	// I - Callback data
-  int	start,				// Start of text
-	end;				// End of text
-  char	last,				// Last style on line
-	stringdeleted=0;
-  char *style,				// Style data
-	*text;				// Text data
-
-
-  // If this is just a selection change, just unselect the style buffer...
-  if (nInserted == 0 && nDeleted == 0) {
-    stylebuf->unselect();
-    return;
-  }
-
-  // Track changes in the text buffer...
-  if (nInserted > 0) {
-    // Insert characters into the style buffer...
-    style = (char*)malloc(nInserted + 1);
-    memset(style, 'A', nInserted);
-    style[nInserted] = '\0'; 
-
-    stylebuf->replace(pos, pos + nDeleted, style);
-    free(style);
-  } else {
-    // Just delete characters in the style buffer...
-    if((stylebuf->character(pos) == 'D') || (stylebuf->character(pos) == 'C')) stringdeleted = 1;
-    
-    stylebuf->remove(pos, pos + nDeleted);
-    if(pos < 2) style_init();
-  }
-
-	 
+void navigator_update(char *text, char *style, int length) {
 	
-  // Select the area that was just updated to avoid unnecessary
-  // callbacks...
-  stylebuf->select(pos, pos + nInserted - nDeleted);
+	int scroll_pos = navigator_browser->position();
+	navigator_browser->clear();
+	
+	funs.clear();
+	classes.clear();
+	structs.clear();
+	enums.clear();
+	unions.clear();
+	
+	string tmp_str = "";
+	deque <Class_stack_item> last_class; 
+	int last_class_depth = 0;
+	//cout << "update" << endl;
+	
+	int depth = 0;
+	
+	for(int i = 0; i < length; i++)
+	{
+		if(style[i] > 'A' && style[i] < 'F') {
+			
+			continue;	
+		}
+		
+		/*if(i < length -6 && strncmp(text+i," class ",7)) 
+		{ 
+			cout << "class found" << endl;
+		}*/
+		if(text[i] == '}') {
+			depth--;
+			if(last_class.size() > 0 && depth < last_class[0].depth) last_class.pop_front();
+		}
 
-  // Re-parse the changed region; we do this by parsing from the
-  // beginning of the line of the changed region to the end of
-  // the line of the changed region...  Then we check the last
-  // style character and keep updating if we have a multi-line
-  // comment character...
-  start = textbuf->line_start(pos);
-  end   = textbuf->line_end(pos + nInserted);
-  text  = textbuf->text_range(start, end);
-  style = stylebuf->text_range(start, end);
-  last  = style[end - start - 1];
+		else if(text[i] == '{') {
+		
+			depth++;
+			
+			int is_class_d = 0;
+			int mode = 0;
+			int pos = i-1;
+			
+			string func_name = "";
+			string func_type = "";
+			string func_args = "";
+			string class_str = "";
+			string method_class_str = "";
+			
+			for(int k = i-1; k >= 0; k--)
+			{
+				
+				
+				if(mode < 0) break;
+				
+				char chr = text[k];
+				char sty = style[k];
+				
+				
+				if(sty > 'A' && sty < 'F') { 	//ignore comments, strings and directives			
+					continue;	
+				}
+				
+				
+				if(mode == 0) {		//search for )
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;		
+					if(chr == ')') mode = 1;
+					else if(chr == 't' && strncmp(text+(k-4),"const",5) == 0)
+					{
+						k -= 5;
+					}
+					else {
+						if(chr < 48 || (chr > 58 && chr < 65) || chr > 122) break;
+						func_name = chr;
+						is_class_d = 1;
+						mode = 10; //maybe class
+					}
+				}
+				else if(mode == 1) {		//search for (
+					if(chr == '\t' || chr == '\n') continue;		
+					else if(chr == '(') mode = 2;
+					else if(chr == ')') mode = -1;
+					else if(chr == ' ' && func_args[0] == ' ') continue;
+					else func_args = chr + func_args;
+				}
+				else if(mode == 2) {		//search for last character of function name
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;	
+					else {
+						func_name = chr;
+						mode = 3;
+						if(sty != 'A') {
+							
+							func_name = "";
+							break;
+						}
+					}
+				}
+				else if(mode == 3) {		//search for rest of function name
+					if(chr == ' ' || chr == '\t' || chr == '\n') mode = 4;							
+					else if(k > 0 && chr == ':' && text[k-1] != ':' && text[k+1] != ':') { 
+							mode = 0;
+							func_name = "";
+							func_args = "";
+							continue;
+						
+					}
+					else if(k > 0 && chr == ':' && text[k-1] == ':') {	//class method
+							k--;
+							mode = 6;
+							continue;
+						
+					}
+					else if(chr == ',') {
+							func_name = "";
+							func_args = "";
+							mode = 0;
+							continue;
+						
+					}
+					else { 
+						func_name = chr+func_name;
+						pos = k;
+						if(sty != 'A') {
+							
+							func_name = "";
+							break;
+						}
+					}
+				}
+				else if(mode == 4) {	//search for first char of func type
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;	
+					else if((k > 0 && chr == ':' && text[k-1] != ':') || chr == '}' ) {
+						if(last_class.size() && last_class[0].name == func_name) 
+						{ 
+							func_type = "";
+							break;
+						}
+						mode = 0;
+						func_name = "";
+						continue;
+						//break;
+					}
+					else if(chr == ';') {
+						break;
+					}
+					else if(chr == ',') {
+							func_name = "";
+							func_args = "";
+							mode = 0;
+							continue;
+						
+					}
+					else if(!(sty == 'F' || sty == 'A')) {
+						cout << func_name << " " << sty << endl;
+						func_name = "";
+						break;
+					}
+					else 
+					{
+						func_type = chr; 
+						mode = 5;
+					}
+				}	
+				else if(mode == 5) { 	//search for rest of type
+					if(chr == '\t' || chr == '\n') chr = ' ';
+					
+					if(chr == ' ' && func_type[0] == ' ') continue;
+					else if(isalnum(chr) || chr == '_' || chr == ' ') func_type = chr + func_type; 
+					else { 
+						func_type = trim(func_type);
+						break;
+					}
+				}
+				
+				else if(mode == 6) {
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;
+					else {
+						method_class_str = chr;
+						mode = 7;
+					}
+				}
+				else if(mode == 7) {
+					if(chr == ' ' || chr == '\t' || chr == '\n') {
+						if(method_class_str == func_name) 
+						{ 
+							func_type = "";
+							break;
+						}
+						mode = 4;
+					}
+					else method_class_str = chr + method_class_str;
+				}
+				
 
 
-  style_parse(text, style, end - start);
 
+				//class parse
+				else if(mode == 10) {		//search for last character of class name
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;
+					else if(chr < 48 || (chr > 58 && chr < 65)) break;		
+					else {
+						func_name = chr+func_name;
+						mode = 11;
+						if(sty != 'A') {
+							//cout << "In 10 " << func_name << " " << sty << endl;
+							func_name = "";
+							break;
+						}
+					}
+				}
+				else if(mode == 11) {		//search for rest of class name
+					if(chr == ' ' || chr == '\t' || chr == '\n') mode = 12;							
+					else if(chr == ':') {
+							mode = 10;
+							func_name = "";
+							continue;
+						
+					}
+					else { 
+						func_name = chr+func_name;
+						pos = k;
+						if(sty != 'A') {
+							
+							func_name = "";
+							break;
+						}
+					}
+				} 
+				else if(mode == 12) {	//search for char before name
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;	
+					/*else if(!(sty == 'F')) {
+						cout << func_name << " " << sty << endl;
+						func_name = "";
+						break;
+					}*/
+					else if(chr == ':') {
+						mode = 10;
+						func_name = "";
+						class_str = "";
+						continue;
+						//break;
+					}
+					else {
+						mode = 13;
+						class_str = chr;
+					}
+				}	
+				else if(mode == 13) {	//search for rest of word before name
+					if(chr == ' ' || chr == '\t' || chr == '\n') 
+					{ 
+						if(class_str == "class") 
+						{
+							is_class_d = 1;
+							break;
+						}
+						else if(class_str == "struct") 
+						{
+							is_class_d = 2;
+							break;
+						}
+						else if(class_str == "enum") 
+						{
+							is_class_d = 3;
+							break;
+						}						
+						else if(class_str == "union") 
+						{
+							is_class_d = 4;
+							break;
+						}
+						
+						else if(class_str == "case") 
+						{
+							is_class_d = 0;						
+						 	func_name = "";
+							break;
+						}
+						else
+						{ 						
+							mode = 14;
+						}
+						
+					}
+					else 
+					{ 
+						class_str = chr + class_str;
+					}
+				}
+				else if(mode == 14) {	//test if it is inheritance
+					if(chr == ' ' || chr == '\t' || chr == '\n') continue;
+					else if(chr == ':')	
+					{ 
+					 	mode = 10;
+					 	//cout << "To 10 " << func_name << " " << class_str << endl;
+					 	//break;
+					 	class_str = "";
+					 	func_name = "";
+					 	continue;
+					}		
+					else
+					{
+						cout << func_name << " " << class_str << endl;
+						//func_name = "";
+						break;
+					}
+				}
+					
+				
+				//while(style[i] > 'A' && style[i] < 'F') pos--;
+			}
+			
+			//char line_nr[100];
+			//sprintf(line_nr,"%d",pos);
+			
+			if(func_type != "") func_type += " ";
+			if(last_class.size() > 0)
+			{
+				method_class_str = last_class[0].name;
+			}
+			
+			if(func_name.size() > 0)
+			{
+				
+				if(is_class_d == 1) {
+					classes.push_back(Nav_entry(func_name,pos,last_class.size()));
+					last_class.push_front(Class_stack_item(func_name,depth));
+				}
+				else if(is_class_d == 2) structs.push_back(Nav_entry(func_name,pos));
+				else if(is_class_d == 3) enums.push_back(Nav_entry(func_name,pos));
+				else if(is_class_d == 4) unions.push_back(Nav_entry(func_name,pos));
+				
+				else if(method_class_str != "") {
+					bool class_dec_av = false;
+					for(int l = 0; l < classes.size(); l++)
+					{
+						if(classes[l].name == method_class_str) 
+						{
+							classes[l].children.push_back(Nav_entry(func_name,pos,func_type,func_args));
+							class_dec_av = true;
+						}
+					}
+					if(!class_dec_av) 
+					{
+						Nav_entry tmp(method_class_str,pos);
+						tmp.children.push_back(Nav_entry(func_name,pos,func_type,func_args));
+						classes.push_back(tmp);
+					}
+				}
+				else {
+					if(nav_sort > 0)
+					{ 
+						if(funs.size() > 0)
+						{	
+							bool ins_done = false;
+							for(deque <Nav_entry>::iterator it = funs.begin(); it != funs.end(); it++)
+							{
+								if(nav_sort == 2 && it->name > func_name) 
+								{ 
+									funs.insert(it,Nav_entry(func_name,pos,func_type,func_args));
+									ins_done = true;
+									break;
+								}
+								else if(nav_sort == 1 && (func_type == "" || it->type > func_type)) 
+								{ 
+									funs.insert(it,Nav_entry(func_name,pos,func_type,func_args));
+									ins_done = true;
+									break;
+								}
+								
+							}
+							if(!ins_done) funs.push_back(Nav_entry(func_name,pos,func_type,func_args));
+						}
+						else
+							funs.push_back(Nav_entry(func_name,pos,func_type,func_args));
+					}
+					else
+						funs.push_back(Nav_entry(func_name,pos,func_type,func_args));
+				}
+						
+			}
+			
+		}
 
-  stylebuf->replace(start, end, style);
-  ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
+	}
+	
+	string typefrm = "\t@C72";
+	
+	for(int i = 0; i < classes.size(); i++)
+	{
+		char line_nr[100];
+		sprintf(line_nr,"%d",classes[i].pos);
+		string dstr = "";
+		
+		if(!nav_expand) {
+			if(classes[i].depth > 0) continue;
+		}
+		
+		for(int d=0; d < classes[i].depth; d++)
+			dstr += "+-";
+		if(dstr != "") dstr += "\t";
+		
+		navigator_browser->add((dstr + "@C136@iclass \t@b@C136"+classes[i].name).c_str(),(void*)strdup(line_nr));
+		
+		if(!nav_expand) continue;
+		
+		for(int j = 0; j < classes[i].children.size(); j++)
+		{
+			char line_nr[100];
+			sprintf(line_nr,"%d",classes[i].children[j].pos);
+			char *nn = strdup(("+-" + dstr + typefrm + classes[i].children[j].type  + "\t@b" + classes[i].children[j].name + "\t(" + classes[i].children[j].args + ")").c_str());
+			navigator_browser->add(nn,(void*)strdup(line_nr));
+			//navigator_browser->add(nn,(void*)strdup(line_nr));
+			free(nn);
+		}
+	}
+	for(int i = 0; i < structs.size(); i++)
+	{
+		char line_nr[100];
+		sprintf(line_nr,"%d",structs[i].pos);
+		navigator_browser->add((("@C72@istruct \t@b@C72" + structs[i].name).c_str()),(void*)strdup(line_nr));
+	}
+	for(int i = 0; i < enums.size(); i++)
+	{
+		char line_nr[100];
+		sprintf(line_nr,"%d",enums[i].pos);
+		navigator_browser->add((("@C72@ienum \t@b@C72" + enums[i].name).c_str()),(void*)strdup(line_nr));
+	}
+	for(int i = 0; i < unions.size(); i++)
+	{
+		char line_nr[100];
+		sprintf(line_nr,"%d",unions[i].pos);
+		navigator_browser->add((("@C72@ienum \t@b@C72" + unions[i].name).c_str()),(void*)strdup(line_nr));
+	}
+	for(int i = 0; i < funs.size(); i++)
+	{
+		char line_nr[100];
+		sprintf(line_nr,"%d",funs[i].pos);
+		navigator_browser->add(((typefrm + funs[i].type + "\t@b" + funs[i].name + "\t(" + funs[i].args + ")").c_str()),(void*)strdup(line_nr));
+	}
+	
+	navigator_browser->position(scroll_pos);
+	//navigator_browser->redraw();
+}
 
-  //if ((last != style[end - start - 1]) || stringdeleted || style[end - start - 1] == 'D') 
-  {
-    // The last character on the line changed styles, so reparse the
-    // remainder of the buffer...
-    free(text);
-    free(style);
+void nav_exp_cb(Fl_Widget *w, void *v) {
+	nav_expand = !nav_expand;
+	
+	if(nav_expand) navigator_pop_btn->replace(navigator_pop_btn->value(),"Collapse Classes");
+	else navigator_pop_btn->replace(navigator_pop_btn->value(),"Expand Classes");
 
-    start = 0;
-    end   = textbuf->length();
-    text  = textbuf->text_range(start, end);
-    style = stylebuf->text_range(start, end);
+	char *style = stylebuf->text_range(0, textbuf->length());
+	char *text = textbuf->text_range(0, textbuf->length());
+	navigator_update(text, style, textbuf->length());
+	free(text);
+	free(style);
+}
 
-    style_parse(text, style, end - start);
-
-    stylebuf->replace(start, end, style);
-    //((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+void nav_norm_cb(Fl_Widget *w, void *v) {
+	nav_sort = 0;
+	
+    navigator_update(textbuf->text_range(0, textbuf->length()), stylebuf->text_range(0, textbuf->length()), textbuf->length());
     
-	te->redraw();
-  }
-
-  free(text);
-  free(style);
 }
 
 
+void nav_type_cb(Fl_Widget *w, void *v) {
+	nav_sort = 1;
+	
+    navigator_update(textbuf->text_range(0, textbuf->length()), stylebuf->text_range(0, textbuf->length()), textbuf->length());
+    
+}
+
+void nav_name_cb(Fl_Widget *w, void *v) {
+	nav_sort = 2;
+	
+    navigator_update(textbuf->text_range(0, textbuf->length()), stylebuf->text_range(0, textbuf->length()), textbuf->length());
+    
+}
 
 
+void debug_cb(Fl_Widget *w, void *v) {
+	fl_message("Not yet implemented");
+	//debug(project.binfilename);
+}
+
+void file_source_cb(Fl_Widget *w, void *v) {
+	const char *val;
+	val = fl_input((strmsg[7]+":").c_str(), ".cpp");
+	if (val != NULL) {
+		if(!create_file(val)) return;
+		string src_files = trim(project.src_files);
+		src_files += " ";
+		src_files += val;
+		project.src_files = trim(src_files);
+		if(fl_ask(strmsg[6].c_str())) generate_makefile_cb();
+		project.addToBrowser(window->pr_browser);
+		project.modified=true;
+	}
+}
+
+
+void file_header_cb(Fl_Widget *w, void *v) {
+	const char *val;
+	val = fl_input((strmsg[7]+":").c_str(), ".h");
+	if (val != NULL) {	
+		if(!create_file(val)) return;	
+		string header_files = trim(project.header_files);
+		header_files += " ";
+		header_files += val;
+		project.header_files = trim(header_files);
+		if(fl_ask(strmsg[6].c_str())) generate_makefile_cb();
+		project.addToBrowser(window->pr_browser);
+		project.modified=true;
+	}
+}
+
+void file_form_cb(Fl_Widget *w, void *v) {
+	const char *val;
+	val = fl_input((strmsg[7]+":").c_str(), ".fl");
+	if (val != NULL) {
+		if(!create_file(val)) return;
+		string gui_files = trim(project.gui_files);
+		gui_files += " ";
+		gui_files += val;
+		project.gui_files = trim(gui_files);
+		if(fl_ask(strmsg[6].c_str())) generate_makefile_cb();		
+		project.addToBrowser(window->pr_browser);
+		project.modified=true;
+	}
+}
+
+
+void navigator_browser_cb(Fl_Widget *w,void *v)
+{
+	//cout << navigator_browser->value() << endl;
+	int but = Fl::event_button();
+	//cout << but << endl;
+	if(but == 3)	
+	{ 
+		if(navigator_browser->value() > 0) 
+	  	{
+	  		navigator_pop_btn->popup();
+	  	}
+	}
+	else
+	{ 
+		if(Fl::event_clicks()>0 || but == 2) {
+			Fl::event_clicks(-1);
+	  		
+	  		
+	  		
+	  		//char *result = strtok(strdup(navigator_browser->text( navigator_browser->value() ))," ");
+	  		//if(result != NULL) result = strtok(NULL," ");
+	  		if(navigator_browser->value() > 0) 
+	  		{
+	  			int pos = atoi((char *)(navigator_browser->data( navigator_browser->value() )));
+	  			//int pos = atoi(result);
+	  			
+	  			te->insert_position(textbuf->length());
+	  			te->show_insert_position();
+	  			
+	  			
+	  			te->insert_position(textbuf->line_start(pos));
+	  			te->show_insert_position();
+	  			
+	  			//textbuf->select(pos,pos+1);
+	  			textbuf->select(textbuf->line_start(pos),textbuf->line_end(pos));
+	  			Fl::focus(te);
+	  			
+	  			//cout << pos << endl;
+	  		}
+	  		//textbuf
+		}
+	}
+	  		
+}
+
+int timeout_mutex = 0;
+
+
+
+void nav_up_timeout(void *v)
+{
+	navigator_update(textbuf->text(),stylebuf->text(),textbuf->length());
+	timeout_mutex = 0;
+}
+
+void add_nav_timeout_handler()
+{
+	if(timeout_mutex) return;
+	timeout_mutex = 1;
+  	Fl::add_timeout(5,nav_up_timeout);
+}
 
 
 /////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////
 // Editor window functions and class...
-
-
-
-class My_Text_Editor2 : public Fl_Text_Editor {
-  public:
-	My_Text_Editor2(int x, int y, int w, int h) : Fl_Text_Editor(x,y,w,h) {};
-    int handle(int event) {
-		if (!buffer()) return 0;
-  	
-  		if (!Fl::event_inside(text_area.x, text_area.y, text_area.w, text_area.h))
-		{
-    		return Fl_Group::handle(event);
-  		}
-
-		if(event==FL_PUSH) {
-			if (Fl::focus() != this) {
-	  		Fl::focus(this);
-			handle(FL_FOCUS);
-			}
-
-			int pos = xy_to_position(Fl::event_x(), Fl::event_y(), CURSOR_POS);
-			buffer()->select(buffer()->line_start(pos), buffer()->line_end(pos)+1);
-			if(Fl::event_clicks()>0) {		
-				Fl::event_clicks(-1);
-				char *buf = outputtb->line_text(pos);
-				if(buf == NULL) return 0;
-				char *t_filename = strsep(&buf,":");
-				if(buf == NULL) return 0;
-				char *linenr = strsep(&buf,":");
-				if(buf == NULL) return 0;
-				int line;	
-
-				if(strcmp(t_filename,filename) != 0) {
-					if (!check_save()) return 0;
-
-					if(t_filename=="") return 0;
-					if (t_filename != NULL) 
-					{
-						load_file(t_filename, -1);
-						add_recent_file_to_menu(filename);
-					}
-				}
-
-				if(sscanf(linenr,"%d",&line))
-				{
-					Fl::focus(te);
-					te->buffer()->unselect();
-					int txtpos = linepos(line);
-					te->insert_position(te->line_start(txtpos-1));
-					te->buffer()->select(te->buffer()->line_start(txtpos-1), te->buffer()->line_end(txtpos-1)+1);
-					te->show_insert_position();
-				}
-			}
-		}
-		else if(event==FL_MOUSEWHEEL) return mVScrollBar->handle(event);
-		else return 0;
-	};
-
-	int linepos(int line) {
-		int ret=0;
-		int size = textbuf->length();
-		while(ret < size) {
-			if(textbuf->count_lines(0,textbuf->line_end(ret))>=line) break;
-			ret = textbuf->line_end(ret);
-			ret ++;
-		}
-		return ret;
-	}
-};
-
-
-
-
-class EditorWindow : public Fl_Double_Window {
-  public:
-    EditorWindow(int w, int h, const char* t);
-    ~EditorWindow();
-    void draw();
-    void EditorWindow::hide_output();	
-    void EditorWindow::show_output();
-    void EditorWindow::hide_browser();	
-    void EditorWindow::show_browser();
-	
-	int handle(int event) {
-		if(event == FL_KEYBOARD) return 0;
-		else return	Fl_Double_Window::handle(event);
-	}
-    
-
-    Fl_Window			*pr_options_dlg;
-    Fl_Input           	*commandline;
-    Fl_Check_Button		*console_check;
-    Fl_Button          	*pr_ok_bt;
-
-    Fl_Window          	*replace_dlg;
-    Fl_Input           	*replace_find;
-    Fl_Input           	*replace_with;
-    Fl_Button          	*replace_all;
-    Fl_Return_Button   	*replace_next;
-    Fl_Button          	*replace_cancel;
-
-    Fl_Button          	*outputwindowbutton;
-	Fl_Tabs				*tabs;
-    Fl_Box	       		*statusbar; 
-    Fl_Output			*fb_label;	
-	Fl_Button			*fb_home_btn;
-    Fl_Text_Editor_ext 	*editor;
-    My_Text_Editor2		*output;
-
-	My_File_Browser	 	*file_browser;
-	Fl_Hold_Browser 	*pr_browser;
-    char               	search[256];
-
-};
 
 
 
@@ -733,15 +846,49 @@ void EditorWindow::draw() {
   Fl_Double_Window::draw();
 }
 
+
+void EditorWindow::show_linenrs()
+{
+	if(line_nr_box->visible()) return;
+
+	
+	te->resize(gwn->x()+line_nr_size,te->y(),gwn->w()-line_nr_size,te->h());
+	line_nr_box->resize(gwn->x(),te->y(),line_nr_size,te->h());
+	gwn->add(line_nr_box);
+	line_nr_box->show();
+	
+	redraw();
+	Fl::check();
+}
+
+
+void EditorWindow::hide_linenrs()
+{
+	if(!line_nr_box->visible()) return;
+
+	gwn->remove(line_nr_box);
+	te->resize(gwn->x()+1,te->y(),gwn->w()-1,te->h());
+	//line_nr_box->resize(te->x()-line_nr_size,te->y(),line_nr_size,te->h());
+	line_nr_box->hide();
+	redraw();
+	Fl::check();
+}
  
  //shows the compiler-output-widget at the bottom
 void EditorWindow::show_output()
 {
-	Fl_Text_Editor *o = output;
+	if(output_grp->visible()) return;
 
-	editor->size(editor->w(),h()-167);	//edited
-	tabs->size(tabs->w(),h()-167); 	//edited
-	o->resize(0,editor->y() + editor->h()+1 ,w(),100);
+	Fl_Group *o = output_grp;
+	int he = o->h();
+	
+	if(he > h() - 100) he = h() / 2;
+
+	tile->size(tile->w(),tile->h() - he );	//edited
+	//tabs->size(tabs->w(),h()-167); 	//edited
+	o->resize(0,tile->y() + tile->h()+1 ,w(),he);
+	all_but_menu_grp->add(o);
+	//output->resize(output_grp->x(),output_grp->y()+4,output_grp->w(),output_grp->h()-6);
 	o->show();
 	Fl::check();
 }
@@ -749,11 +896,17 @@ void EditorWindow::show_output()
 //hides the compiler-output-widget at the bottom
 void EditorWindow::hide_output()
 {
-	Fl_Text_Editor *o = output;
-
-	editor->size(editor->w(),h()-66);	//edited
-	tabs->size(tabs->w(),h()-66);	//edited
+	if(!output_grp->visible()) return;
+	//Fl_Text_Editor *o = output;
+	Fl_Group *o = output_grp;
+	all_but_menu_grp->remove(o);
+	
+	//o->resize(0,tile->y() + tile->h()+1 ,w(),0);
 	o->hide();
+	
+	tile->size(tile->w(),h()-66);	//edited
+	//tabs->size(tabs->w(),h()-66);	//edited
+	//
 }
  
 
@@ -761,18 +914,56 @@ void EditorWindow::hide_output()
 void EditorWindow::show_browser()
 {
 	tabs->size(150,editor->h());
-	editor->resize(tabs->w(),editor->y(),editor->w()-tabs->w(),editor->h());
+	gwn->resize(tabs->w(),gwn->y(),gwn->w()-tabs->w(),gwn->h());
 	tabs->show();
-	editor->redraw();
+	gwn->redraw();
 	Fl::check();
 }
 
 //hides the project-/file-browser at the left
 void EditorWindow::hide_browser()
 {
-	editor->resize(0,editor->y(),w(),editor->h());
+	gwn->resize(0,gwn->y(),w(),gwn->h());
 	tabs->hide();
 }
+
+
+
+
+
+class DragButton : public Fl_Button {
+  public:
+  	DragButton(int x, int y, int w, int h) : Fl_Button(x,y,w,h) {}
+  	
+  	int handle(int event) {
+		switch(event) {
+			case FL_ENTER: fl_cursor(FL_CURSOR_NS); return 1;
+			case FL_LEAVE: fl_cursor(FL_CURSOR_DEFAULT); return 1;
+			case FL_DRAG: {
+				int x = Fl::event_x();
+				int y = Fl::event_y();
+				
+				if(y > output_grp->parent()->parent()->h() - 40 || y < 140) return 1;
+				tile->size(tile->w(),y-tile->y()-2);
+				
+				int oldh = output_grp->y()+output_grp->h();
+				int newh = oldh-(tile->y()+tile->h() + 1);
+				
+				output_grp->resize(0,tile->y()+tile->h() + 1,output_grp->w(),newh);
+				
+				//Fl::check();
+				//window->redraw();
+				output_grp->parent()->parent()->redraw();
+				//tile->redraw();
+				return 1;
+			}
+		}
+		return Fl_Button::handle(event);
+	}
+};
+
+
+
 
 
 int check_save(void) {
@@ -806,8 +997,39 @@ int check_project_save(void) {
 }
 
 
+void backupfile(char *newfile)
+{
+	char buf[1000];
+	char *cpfile = strdup(newfile);
+	char *tb = (char *)fl_filename_name(cpfile);
+	char *filename = strdup(tb);
+	//if(tb!=newfile) 
+	tb[0]='\0';
+	sprintf(buf,"cp %s%s %s.%s~ &",tb,filename,tb,filename);
+	string bf = string(tb) + "." + filename + "~";
+	char absbuf[1000];
+	fl_filename_absolute(absbuf,1000,bf.c_str());
+	bakfiles.push_back(string(absbuf));
+	FILE *ptr = popen(buf,"r"); 
+	if(ptr)
+  	pclose(ptr);
+  	free(filename);
+  	free(cpfile);
+}
 
 
+void removebackupfiles()
+{
+	char buf[1000];
+	for(int i = 0; i < bakfiles.size(); i++)
+	{
+		sprintf(buf,"rm -rf %s &",bakfiles[i].c_str());
+		FILE *ptr = popen(buf,"r"); 
+		if(ptr)
+	  	pclose(ptr);	
+	  	cout << "Removed " << bakfiles[i] << endl;
+	}
+}
 
 int  load_file(char *newfile, int ipos) {
   loading = 1;
@@ -816,6 +1038,7 @@ int  load_file(char *newfile, int ipos) {
   if(strncmp(newfile + strlen(newfile) - 4,".cpp",4) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 2,".c",2) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 2,".h",2) == 0) cppfile = true;
+  if(strncmp(newfile + strlen(newfile) - 2,".H",2) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 4,".hpp",4) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 4,".cxx",4) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 4,".hxx",4) == 0) cppfile = true;
@@ -828,6 +1051,7 @@ int  load_file(char *newfile, int ipos) {
 		return 2;
 	}
 
+  
   int insert = (ipos != -1);
   bufchanged = insert;
   char *tmp = strdup(filename);
@@ -836,10 +1060,20 @@ int  load_file(char *newfile, int ipos) {
 
   if (!insert) { 
 	if (tmp[0] != '\0') file_hist->add(tmp,te->insert_position());
+	
+	if(backup_file) backupfile(newfile);
+	
+    navigator_browser->clear();
 	r = textbuf->loadfile(newfile);
+	char *style = stylebuf->text_range(0, textbuf->length());
+	char *text = textbuf->text_range(0, textbuf->length());
+	navigator_update(text, style, textbuf->length());
+	free(text);
+	free(style);
   }
   else r = textbuf->insertfile(newfile, ipos);
 
+  free(tmp);
   if (r)
     fl_alert("%s \'%s\':\n%s.", strmsg[11].c_str(), newfile, strerror(errno));
   else
@@ -860,7 +1094,8 @@ void save_file(char *newfile) {
   else
     strcpy(filename, newfile);
   bufchanged = 0;
-  textbuf->call_modify_callbacks();
+  textbuf->call_modify_callbacks();  
+  add_recent_file_to_menu(filename);
 }
 
 
@@ -1006,8 +1241,8 @@ void set_title(Fl_Window* w) {
   	strcat(temp_title, mod_str.c_str());
   	strcat(temp_title, ")");
   }
-  if(!project.assigned) sprintf(title,"FLDev     %s",temp_title);
-  else sprintf(title,"FLDev  %s: %s  %s: %s",window->tabs->child(0)->label(),project.name.c_str(),file_str.c_str(),temp_title);
+  if(!project.assigned) sprintf(title,"FLDev %s    %s",VERSION,temp_title);
+  else sprintf(title,"FLDev %s    %s: %s  %s: %s",VERSION,window->tabs->child(0)->label(),project.name.c_str(),file_str.c_str(),temp_title);
   sprintf(filename_wo_path,"%s",temp_title);
   ((EditorWindow *)w)->label(title);
 }
@@ -1036,6 +1271,7 @@ void new_cb(Fl_Widget*, void*) {
   textbuf->remove_selection();
   bufchanged = 0;
   textbuf->call_modify_callbacks();
+  navigator_browser->clear();
 }
 
 
@@ -1069,7 +1305,7 @@ void insert_cb(Fl_Widget*, void *v) {
   if (newfile != NULL) load_file(newfile, w->editor->insert_position());
 }
 
-
+/*
 void close_cb(Fl_Widget*, void* v) {
   if(Fl::event_key() == FL_Escape) return;
   Fl_Window* w = (Fl_Window*)v;
@@ -1087,7 +1323,7 @@ void close_cb(Fl_Widget*, void* v) {
   pclose(ptr);
 
   exit(0);
-}
+}*/
 
 void quit_cb(Fl_Widget*, void*) {
   if(Fl::event_key() == FL_Escape) return;
@@ -1097,6 +1333,7 @@ void quit_cb(Fl_Widget*, void*) {
   save_config_file();
   FILE *ptr = popen("rm -f fldevrun.sh","r");
   pclose(ptr);
+  if(delbak) removebackupfiles();
   exit(0);
 }
 
@@ -1213,8 +1450,14 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   e->redraw();
   ptr = popen("rm errorlog.make 2> /dev/null","r"); 
   pclose(ptr);
-  char *fname = strdup(filename_wo_path);
-  if(mode==2) sprintf(buf,"make %s.o 2> errorlog.make",strsep(&fname,"."));
+  if(mode==2) 
+  { 
+  	char *fname = strdup(filename_wo_path);
+  	char *name_wo_ext = fl_filename_setext(fname,".o");
+  	sprintf(buf,"make %s 2> errorlog.make",name_wo_ext);
+  	if(fname) free(fname);
+  	//cout << buf << endl;
+  }
   else if(mode==1) sprintf(buf,"make clean 2> errorlog.make &");
   else if(mode==0) sprintf(buf,"make 2> errorlog.make &");
   else return;
@@ -1297,6 +1540,19 @@ void theme_none_cb()
 
 
 
+void mcomment_cb() {
+	int start,end;
+	te->buffer()->selection_position(&start,&end);
+	te->buffer()->insert(end,"*/");	
+	te->buffer()->insert(start,"/*");
+}
+
+void mstring_cb() {
+	int start,end;
+	te->buffer()->selection_position(&start,&end);
+	te->buffer()->insert(end,"\"");	
+	te->buffer()->insert(start,"\"");
+}
 
 void mindent_cb() {
 	int firstlinepos,actuallinepos;
@@ -1324,10 +1580,90 @@ void munindent_cb() {
 
 
 void about_cb() {
-	fl_message("FLDev IDE\nVersion 0.5.6\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
+	fl_message("FLDev IDE\nVersion %s\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n",VERSION);
 }
 
 
+
+
+
+void snipp_gpl_cb(Fl_Widget *w, void *v) {
+	te->buffer()->insert(te->insert_position(), "/*\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n*/"); 
+	
+}
+
+void snipp_header_cb(Fl_Widget *w, void *v) {
+	te->buffer()->insert(te->insert_position(), "\n#ifndef \n#define\n\n\n#endif\n"); 
+	
+}
+
+void snipp_if_cb(Fl_Widget *w, void *v) {
+	int ip = te->insert_position();
+	int post_ip = ip + 3;
+	
+	char *line;
+	line = strdup(te->buffer()->line_text(ip));
+	for(int i = 0; i < strlen(line); i++) {
+		if(line[i]!=' ' && line[i]!='\t') line[i]='\0';
+	}
+	
+	string ip_str = "if()\n" + string(line) + "{\n" + line + "\t\n" + line + "}\n";
+	te->buffer()->insert(ip, ip_str.c_str()); 	
+  	
+	te->insert_position(post_ip);
+	free(line);
+}
+
+void snipp_while_cb(Fl_Widget *w, void *v) {
+	int ip = te->insert_position();
+	int post_ip = ip + 6;
+	
+	char *line;
+	line = strdup(te->buffer()->line_text(ip));
+	for(int i = 0; i < strlen(line); i++) {
+		if(line[i]!=' ' && line[i]!='\t') line[i]='\0';
+	}
+	
+	string ip_str = "while()\n" + string(line) + "{\n" + line + "\t\n" + line + "}\n";
+	te->buffer()->insert(ip, ip_str.c_str()); 	
+  	
+	te->insert_position(post_ip);
+	free(line);
+}
+
+void snipp_for_cb(Fl_Widget *w, void *v) {
+	int ip = te->insert_position();
+	int post_ip = ip + 4;
+	
+	char *line;
+	line = strdup(te->buffer()->line_text(ip));
+	for(int i = 0; i < strlen(line); i++) {
+		if(line[i]!=' ' && line[i]!='\t') line[i]='\0';
+	}
+	
+	string ip_str = "for(;;)\n" + string(line) + "{\n" + line + "\t\n" + line + "}\n";
+	te->buffer()->insert(ip, ip_str.c_str()); 	
+  	
+	te->insert_position(post_ip);
+	free(line);
+}
+
+void snipp_class_cb(Fl_Widget *w, void *v) {
+	int ip = te->insert_position();
+	int post_ip = ip + 6;
+	
+	char *line;
+	line = strdup(te->buffer()->line_text(ip));
+	for(int i = 0; i < strlen(line); i++) {
+		if(line[i]!=' ' && line[i]!='\t') line[i]='\0';
+	}
+	
+	string ip_str = "class  \n" + string(line) + "{\n" + line + "  public:\n"+ line + "\t\n" + line + "};\n";
+	te->buffer()->insert(ip, ip_str.c_str()); 	
+  	
+	te->insert_position(post_ip);
+	free(line);
+}
 
 
 
@@ -1345,7 +1681,7 @@ Fl_Menu_Item menuitems[] = {
 	{ 0 },
     { "&Insert File...",  FL_CTRL + 'e', (Fl_Callback *)insert_cb, 0, FL_MENU_DIVIDER },
     { "&Save File",       FL_CTRL + 's', (Fl_Callback *)save_cb }, 	//10
-    { "Save File &As...", FL_CTRL + FL_SHIFT + 's', (Fl_Callback *)saveas_cb, 0, FL_MENU_DIVIDER },
+    { "Save File &As...", 0, (Fl_Callback *)saveas_cb, 0, FL_MENU_DIVIDER },
     { "E&xit", FL_ALT + FL_F + 4, (Fl_Callback *)quit_cb, 0 },
     { 0 },
 
@@ -1355,20 +1691,24 @@ Fl_Menu_Item menuitems[] = {
     { "&Copy",       FL_CTRL + 'c', (Fl_Callback *)copy_cb },
     { "&Paste",      FL_CTRL + 'v', (Fl_Callback *)paste_cb },
     { "&Delete",     0, (Fl_Callback *)delete_cb, 0, FL_MENU_DIVIDER },
+    { "C&omment out",       FL_ALT+'c', (Fl_Callback *)mcomment_cb },//20
+    { "&Stringize",       FL_ALT+'s', (Fl_Callback *)mstring_cb },
     { "&Indent Selection", FL_CTRL + 'i', (Fl_Callback *)mindent_cb },
-    { "U&nindent Selection", FL_CTRL + FL_SHIFT + 'i', (Fl_Callback *)munindent_cb , 0, FL_MENU_DIVIDER},	//20
+    { "U&nindent Selection", FL_CTRL + FL_SHIFT + 'i', (Fl_Callback *)munindent_cb , 0, FL_MENU_DIVIDER},	
     { "Pre&ferences...",        0, (Fl_Callback *)pref_cb },
     { 0 },	
 
   { "&View", 0, 0, 0, FL_SUBMENU },
     { "&Show Filebrowser",        0, (Fl_Callback *)show_browser_cb, 0, FL_MENU_TOGGLE },
+    { "&Show Navigator",        0, (Fl_Callback *)show_nav_cb, 0, FL_MENU_TOGGLE },
+    { "&Show Linenumbers",        0, (Fl_Callback *)show_linenrs_cb, 0, FL_MENU_TOGGLE },
     { "&Theme",        0,  0, 0, FL_SUBMENU },
       { "&None",        0, (Fl_Callback *)theme_none_cb },
       { "&Plastic",        0, (Fl_Callback *)theme_plastic_cb },
-      { 0 },
+      { 0 },//30
     { 0 }, 
 
-  { "&Search", 0, 0, 0, FL_SUBMENU },	//30
+  { "&Search", 0, 0, 0, FL_SUBMENU },	
     { "&Find...",       FL_CTRL + 'f', find_cb },
     { "F&ind Again",    FL_F + 3, find2_cb },
     { "&Replace...",    FL_CTRL + 'r', replace_cb },
@@ -1378,7 +1718,7 @@ Fl_Menu_Item menuitems[] = {
  { "&Project", 0, 0, 0, FL_SUBMENU },
     { "&New Project", FL_CTRL + FL_SHIFT + 'n', (Fl_Callback *)new_pr_cb},
     { "Open &Project", FL_CTRL + FL_SHIFT + 'p', (Fl_Callback *)open_pr_cb },
-    { "Previous Pro&ject", 0, 0, 0, FL_SUBMENU },	//39
+    { "Previous Pro&ject", 0, 0, 0, FL_SUBMENU },//41	
 		{ "" },
 		{ "" },
 		{ "" },
@@ -1389,6 +1729,7 @@ Fl_Menu_Item menuitems[] = {
     { "&Run",    FL_F + 8, (Fl_Callback *)run_cb },
     { "&Compile",    FL_F + 6, (Fl_Callback *)compile_cb },
     { "Make &and Run", FL_F + 9, (Fl_Callback *)make_run_cb },
+    { "&Debug",       FL_CTRL + FL_F + 9, (Fl_Callback *)debug_cb },
     { "Make C&lean", 0, (Fl_Callback *)make_clean_cb , 0, FL_MENU_DIVIDER},
     { "&Generate Makefile", 0, (Fl_Callback *)generate_makefile_cb , 0, FL_MENU_DIVIDER},
     { "&Options...",       FL_CTRL + FL_ALT + 'p', (Fl_Callback *)pr_opt_cb },
@@ -1397,6 +1738,17 @@ Fl_Menu_Item menuitems[] = {
   { "&Tools", 0, 0, 0, FL_SUBMENU },
     { "&Fluid",       FL_F + 12, (Fl_Callback *)fluid_cb },
     { "&XTerm",       FL_CTRL + 't', (Fl_Callback *)xterm_cb },
+    { 0 }, 
+    
+  { "E&xtras", 0, 0, 0, FL_SUBMENU },
+    { "&Code Snippets",   0, 0, 0, FL_SUBMENU},
+    	{ "GPL", 	FL_CTRL + FL_ALT + 'g',	snipp_gpl_cb },
+    	{ "Header", FL_CTRL + FL_ALT + 'h',	snipp_header_cb},
+    	{ "class",	FL_CTRL + FL_ALT + 'c',	snipp_class_cb },
+    	{ "if",		FL_CTRL + FL_ALT + 'i',	snipp_if_cb },    	
+    	{ "while",	FL_CTRL + FL_ALT + 'w',	snipp_while_cb },
+    	{ "for",	FL_CTRL + FL_ALT + 'f',	snipp_for_cb },
+    	{0},
     { 0 }, 
 
   { "&Help", 0, 0, 0, FL_SUBMENU },
@@ -1420,9 +1772,12 @@ Fl_Menu_Item menuitems[] = {
 
 
 void owbt_callback(Fl_Widget*, void*) {
-	if(!window->output->visible()) window->show_output();
+	if(output_grp==NULL) return;
+	if(!output_grp->visible()) window->show_output();
 	else window->hide_output();
 	window->redraw();
+	Fl::check();
+	output_grp->redraw();
 }
 
 
@@ -1444,6 +1799,7 @@ void pr_opt_cb(Fl_Widget*, void*) {
 
 		project.src_files = psrc->value();
 	 	project.header_files = phdr->value();
+	 	project.gui_files = pgui->value();
 
 		if(pr_changed == 1) if(fl_ask(strmsg[6].c_str())) generate_makefile_cb();
 		project.addToBrowser(window->pr_browser);
@@ -1474,9 +1830,11 @@ void open_pr_cb() {
   }
   project.addToBrowser(window->pr_browser); 
   load_file( (char *)window->pr_browser->text(1) , -1 );
-  for(int i = 0; i < 9; i++) menuitems[rec_pr_menu_index+i].activate();
+  for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
   add_recent_project_to_menu(newfile);
   menubar->copy(menuitems, window);
+  
+	free(dir);
 }
 
 
@@ -1531,6 +1889,7 @@ void new_pr_cb() {
   window->pr_browser->clear();
   project.src_files = " ";
   project.header_files = "";
+  project.gui_files = "";
   
   //build main.cpp
   if(main_cpp_chk->value()) {
@@ -1547,10 +1906,11 @@ void new_pr_cb() {
   project.load();
   
 
-  for(int i = 0; i < 8; i++) menuitems[rec_pr_menu_index+i].activate();
+  for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
   menubar->copy(menuitems, window);
   add_recent_project_to_menu(strdup(project.pr_filename.c_str()));
   
+	free(tmpbuf);
   //set_title(window);
 }
 
@@ -1577,111 +1937,81 @@ void pref_cb(Fl_Widget*, void*) {
 	te->smart_indent = smart_indent_check->value();
 }
 
-
-void show_browser_cb()
+void show_linenrs_cb()
 {
-	if(window->tabs->Fl_Widget::visible()) {
-		window->hide_browser();
-		menuitems[25].clear();
+	if(window->line_nr_box->visible()) {
+		window->hide_linenrs();
+		menuitems[29].clear();
 	}
 	else {
-		window->show_browser();
-		menuitems[25].set();	
+		window->show_linenrs();
+		menuitems[29].set();	
 	}
 	
 	menubar->copy(menuitems, window);
 }
 
-
-void generate_makefile_cb()
+void show_browser_cb()
 {
-	if(!project.assigned) return;
-	char buf[555];
-	int BUFSIZE=555;
-	char *homedir = getenv("HOME");
-	sprintf(buf,"Makefile");
-	FILE *ptr = fopen(buf,"w");
-	
-	if(!window->output->visible()) window->show_output();
-
-  	outputtb->remove(0,outputtb->length());
-  	op_stylebuf->remove(0,op_stylebuf->length());
-  	outputtb->append("Generating Makefile...");
-
-	
-	char *src_files = strdup(project.src_files.c_str());
-		char *fname;
-	string exobjs;
-
-		while(1)
-		{			
-			fname = strsep(&src_files," ");
-
-			char *first = strsep(&fname,".");
-			exobjs += "$(oDir)/";
-			exobjs += first;
-			exobjs += ".o ";
-
-			if(src_files == NULL || src_files == "") break;
-		}
-
-	if(ptr != NULL) 
-	{
-		fprintf(ptr,"# Standard defines:\n\nCC\t=\tg++\nLD\t=\tg++\nCCOMP\t=\tgcc\n");
-		fprintf(ptr,"oDir\t=\t%s\n",	project.oDir.c_str());
-		fprintf(ptr,"Bin\t=\t%s\n",		project.Bin.c_str());
-		fprintf(ptr,"libDirs\t=\t%s\n",		project.libdirs.c_str());
-		fprintf(ptr,"incDirs\t=\t%s\n",		project.incdirs.c_str());
-		fprintf(ptr,"LD_FLAGS\t=\t%s\n",	project.ldflags.c_str());
-		fprintf(ptr,"LIBS\t=\t%s\n",		project.libs.c_str());
-		fprintf(ptr,"C_FLAGS\t=\t%s\n",		project.cflags.c_str());
-		fprintf(ptr,"SRCS\t=\t%s\n",		project.src_files.c_str());
-		fprintf(ptr,"EXOBJS\t=\t%s\n",		exobjs.c_str());
-		fprintf(ptr,"ALLOBJS\t=\t%s\n",		"$(EXOBJS)");
-		fprintf(ptr,"ALLBIN\t=\t$(Bin)/%s\n",		project.binfilename.c_str());
-		fprintf(ptr,"ALLTGT\t=\t$(Bin)/%s\n",		project.binfilename.c_str());
-
-		fprintf(ptr,"\n#@# Targets follow ---------------------------------\n");
-		fprintf(ptr,"all:\t$(ALLTGT)\n");
-		fprintf(ptr,"objs:\t$(ALLOBJS)\n");
-		fprintf(ptr,"cleanobjs:\n\trm -f $(ALLOBJS)\n");
-		fprintf(ptr,"cleanbin:\n\trm -f $(ALLBIN)\n");
-		fprintf(ptr,"clean:\tcleanobjs cleanbin\n");
-		fprintf(ptr,"cleanall:\tcleanobjs cleanbin\n");
-
-		fprintf(ptr,"\n#@# Dependency rules follow -----------------------------\n");
-		fprintf(ptr,"$(Bin)/%s: $(EXOBJS)\n",	project.binfilename.c_str());
-		fprintf(ptr,"\t$(LD) -o $(Bin)/%s $(EXOBJS) $(incDirs) $(libDirs) $(LD_FLAGS) $(LIBS)\n",	project.binfilename.c_str());
-
-		char *src_files = strdup(project.src_files.c_str());
-		char *fname;
-
-		while(1)
-		{			
-			fname = strsep(&src_files," ");
-
-			char *first = strsep(&fname,".");
-			char *ext = strsep(&fname,"\n");
-
-			fprintf(ptr,"\n$(oDir)/%s.o: %s.%s %s\n",		first,first,ext,project.header_files.c_str());
-			//fprintf(ptr,"\n$(oDir)/%s.o: %s.%s %s Makefile\n",		first,first,ext,project.header_files.c_str());
-			fprintf(ptr,"\t$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<\n");
-			if(src_files == NULL || src_files == "") break;
-		}
-
-		fclose(ptr);
-	  	outputtb->append("OK");
+	if(window->tabs->Fl_Widget::visible()) {
+		window->hide_browser();
+		menuitems[27].clear();
 	}
+	else {
+		window->show_browser();
+		menuitems[27].set();	
+	}
+	
+	menubar->copy(menuitems, window);
+}
 
+void show_nav_cb()
+{
+	int y = browser_file_grp->parent()->y();
+	int h = browser_file_grp->parent()->h();
+				
+	
+				
+	if(browser_nav_grp->visible()) {
+		menuitems[28].clear();
+		browser_nav_grp->hide();
+		show_nav = 0;
+		browser_file_grp->size(browser_file_grp->w(),h);
+	}
+	else {		
+		menuitems[28].set();
+		show_nav = 1;	
+		browser_file_grp->size(browser_file_grp->w(),h/2);
+		browser_nav_grp->resize(browser_nav_grp->x(),browser_file_grp->y()+h/2,browser_nav_grp->w(),h-h/2);
+		browser_nav_grp->show();
+	}
+	
+	menubar->copy(menuitems, window);
+	window->redraw();
+	
 }
 
 
-
 void pr_browser_cb(Fl_Widget* o, void*) {
-	if(Fl::event_clicks()>0) {
+	if(Fl::event_button() == 3)
+	{
+		file_pop_btn->popup();
+	}	
+	else if(Fl::event_clicks()>0) {
 		Fl::event_clicks(-1);
-  		if (!check_save()) return;
-		load_file( (char *)((Fl_Browser*)o)->text( ((Fl_Browser*)o)->value() ) , -1 );
+		
+		char *name = (char *)((Fl_Browser*)o)->text( ((Fl_Browser*)o)->value());
+		
+		if(fl_filename_match(name,"*.fl")) {
+			char buf[255];
+			sprintf(buf,"fluid %s &",name);
+			FILE *ptr;
+			ptr = popen(buf,"r");
+			pclose(ptr);
+			return;
+		}
+		else if (!check_save()) return;
+		load_file(  name , -1 );
 		add_recent_file_to_menu(filename);
 	}
 }
@@ -1689,7 +2019,12 @@ void pr_browser_cb(Fl_Widget* o, void*) {
 
 
 void file_browser_cb(Fl_Widget* o, void*) {
-	if(Fl::event_clicks()>0) {
+
+	if(Fl::event_button() == 3)
+	{
+		fb_pop_btn->popup();
+	}	
+	else if(Fl::event_clicks()>0) {
 		Fl::event_clicks(-1);
 		int val = ((Fl_Browser*)o)->value();
 		char *browser_text = (char *)((Fl_Browser*)o)->text( val );
@@ -1720,10 +2055,17 @@ void file_browser_cb(Fl_Widget* o, void*) {
   		if (!check_save()) return;
 		load_file( l , -1 );
 		add_recent_file_to_menu(filename);
+		
+		free(l);
 	}
 }
 
 
+void fb_showhidden_cb(Fl_Widget* o, void*)
+{
+	window->file_browser->toggle_show_hidden();
+	window->file_browser->reload();
+}
 
 
 void show_help(const char *name) {
@@ -1735,7 +2077,7 @@ void show_help(const char *name) {
   if ((docdir = getenv("FLTK_DOCDIR")) == NULL) {
 	if(strlen(usrdocdir) == 0)
     	docdir = "/usr/local/share/doc/fltk";
-    else docdir = strdup(usrdocdir);
+    else docdir = usrdocdir;
   }
   snprintf(helpname, sizeof(helpname), "%s/%s", docdir, name);  
 
@@ -1811,6 +2153,7 @@ void show_ref(const char *name) {
   help_dialog->load(helpname);
   help_dialog->resize(help_dialog->x(),help_dialog->y(),760,540);
   help_dialog->show();
+  free(docdir);
 }
 
 void manual_cb(Fl_Widget *, void *) {
@@ -1836,7 +2179,7 @@ void load_config_file()
 	FILE *ptr = fopen(buf,"r");
 
 	if(ptr != NULL) {
-		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n",
+		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d\n%d\n%d\n",
 					&save_window_size,
 					&x,
 					&y,
@@ -1864,7 +2207,11 @@ void load_config_file()
 					&hl_keyword,
 					&hl_character,
 					&background_color,
-					&usrdocdir )) {
+					&usrdocdir,
+					&auto_brace_mode,
+					&backup_file,
+					&delbak,
+					&show_nav )) {
 			if(strlen(file4)>3) add_recent_file_to_menu(file4+3);
 			if(strlen(file3)>3) add_recent_file_to_menu(file3+3);
 			if(strlen(file2)>3) add_recent_file_to_menu(file2+3);
@@ -1874,14 +2221,26 @@ void load_config_file()
 			if(strlen(pr2)>3) add_recent_project_to_menu(pr2+3);
 			if(strlen(pr1)>3) add_recent_project_to_menu(pr1+3);
 			
-			if(strlen(usrdocdir)>0) usrdoc_input->value(usrdocdir);
+			if(strlen(usrdocdir)>0 && fl_filename_isdir(usrdocdir)) usrdoc_input->value(usrdocdir);
 			else usrdoc_input->value("/usr/local/share/doc/fltk");
 			
 			Fl::scheme(scheme);
-			if(save_window_size) window->resize(x,y,w,h);
+			if(save_window_size) 
+			{
+				window->resize(x,y,w,h);
+				int y = browser_file_grp->parent()->y();
+				int h = browser_file_grp->parent()->h();
+				
+				browser_file_grp->size(browser_file_grp->w(),h/2);
+				browser_nav_grp->resize(browser_nav_grp->x(),browser_file_grp->y()+h/2,browser_nav_grp->w(),h-h/2);
+				
+			}
 			te->smart_indent = sm_in;
 			smart_indent_check->value(sm_in!=0);
+			auto_brace_check->value(auto_brace_mode!=0);			
 			rec_pr_check->value(rp_al!=0);
+			bak_check->value(backup_file!=0);
+			delbak_check->value(delbak!=0);
 		}
 		else fl_alert(strmsg[16].c_str());
   		fclose(ptr);
@@ -2207,9 +2566,11 @@ void save_config_file()
 	FILE *ptr = fopen(buf,"w");
 	int startitem = rec_pr_menu_index - 8;
 
+	if(strlen(usrdocdir) < 1) usrdocdir[0] = '\0';
+ 	
 	if(ptr != NULL) 
 	{
-		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
+		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n%d\n%d\n%d\n%d\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
 				menuitems[4].label(),menuitems[5].label(),menuitems[6].label(),menuitems[7].label(),
 				menuitems[startitem+4].label(),menuitems[startitem+5].label(),menuitems[startitem+6].label(),menuitems[startitem+7].label(),te->smart_indent,rec_pr_check->value(),
 				hl_plain,
@@ -2221,7 +2582,11 @@ void save_config_file()
 				hl_keyword,
 				hl_character,
 				background_color,
-				usrdocdir);
+				usrdocdir,
+				auto_brace_mode,
+				backup_file,
+				delbak,
+				show_nav );
 		fclose(ptr);
 	}
 
@@ -2296,11 +2661,12 @@ void recent_project_cb(Fl_Widget* w, void *v)
 		  if(window->pr_browser->text(1)!=NULL)
 		  	load_file( (char *)window->pr_browser->text(1) , -1 );
 		  else new_cb(0,0);
-		  for(int i = 0; i < 9; i++) menuitems[rec_pr_menu_index+i].activate();
+		  for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
 		  add_recent_project_to_menu(newfile);
 		  menubar->copy(menuitems, window);
 		 
 	}
+	free(path);
 	
 }
 
@@ -2344,26 +2710,26 @@ void add_recent_project_to_menu(char *filename)
 }
 
 
-
+char *old_rec_men_entry;
 
 
 void add_recent_file_to_menu(char *filename)
 {
 	char buf[255];
 	fl_filename_absolute(buf,filename);
-	filename = buf;
+	//filename = buf;
 
-	if(filename=="") return;
+	if(buf=="") return;
 
-	if(strcmp(filename,menuitems[4].label()) == 0) return;
+	if(strcmp(buf,menuitems[4].label()) == 0) return;
 
-	else if(strcmp(filename,menuitems[5].label()) == 0) {
+	else if(strcmp(buf,menuitems[5].label()) == 0) {
 		Fl_Menu_Item mi = menuitems[5];
 		menuitems[5] = menuitems[4];
 		menuitems[4] = mi;
 	}
 
-	else if(strcmp(filename,menuitems[6].label()) == 0) {
+	else if(strcmp(buf,menuitems[6].label()) == 0) {
 		Fl_Menu_Item mi = menuitems[6];
 		menuitems[6] = menuitems[5];
 		menuitems[5] = menuitems[4];
@@ -2371,10 +2737,16 @@ void add_recent_file_to_menu(char *filename)
 	}
 
 	else {
-		Fl_Menu_Item mi = { strdup(filename), 0, recent_file_cb };
+	
+		Fl_Menu_Item mi = { strdup(buf), 0, recent_file_cb };
+		
+		char *t = (char *)menuitems[7].text;
+		//cout << t << endl;
+		if(t) free(t);
+		
 		menuitems[7] = menuitems[6];
 		menuitems[6] = menuitems[5];
-		menuitems[5] = menuitems[4];
+		menuitems[5] = menuitems[4];		
     	menuitems[4] = mi;
 	}
 	
@@ -2433,7 +2805,21 @@ void set_text_size(int t)
 			te->mCursor_color = hl_plain;
 		  
 			op_styletable[0].size = t;
+			op_styletable[0].color = hl_plain;
 			op_styletable[1].size = t;
+			//styletable[1].color = hl_plain;
+			
+			window->line_nr_box->labelsize(t);
+			
+			window->output->color(background_color);
+			
+			window->pr_browser->textcolor(hl_plain);
+			window->pr_browser->color(background_color);
+			navigator_browser->textcolor(hl_plain);
+			navigator_browser->color(background_color);
+			window->file_browser->textcolor(hl_plain);
+			window->file_browser->color(background_color);
+			window->redraw();
 }
 
 
@@ -2444,34 +2830,39 @@ void home_cb(Fl_Widget* w, void*)
 	window->file_browser->load(getenv("HOME"));
 }
 
-class SmartButton : public Fl_Button
+
+void projdir_cb(Fl_Widget* w, void*)
 {
-	public:
-		SmartButton(int x, int y, int w, int h) : Fl_Button(x,y,w,h) { 
-			box(FL_NO_BOX); 
-			down_box(FL_DOWN_BOX); 
-			
-		}
-		
-		void draw()
-		{
-			if (type() == FL_HIDDEN_BUTTON) return;
-  			Fl_Color col = value() ? selection_color() : color();
-			  draw_box(value() ? (down_box()?down_box():fl_down(box())) : box(), col);
-			  draw_label();	
-		}
-		
-};
+	char cwd[255];
+	getcwd(cwd,255);
+	window->fb_label->value(strdup((cwd+string("/")).c_str()));
+	window->file_browser->load(cwd);
+}
+
+
+
+
+void tile_resize(Fl_Widget *w, void *v)
+{
+	//cout << "cb" << endl;
+	
+	window->redraw();
+	//Fl::check();
+	//output_grp->redraw();
+}
+
+
 
 Fl_Window* make_form() {
     EditorWindow* w = new EditorWindow(660, 400, title);
     window = w;
-	int pr_browsersize = 150;
-	int tabs_size = 150;
+	int pr_browsersize = 180;
+	//int tabs_size = 150;
     w->begin();
 
     menubar = new Fl_Menu_Bar(0, 0, 660, 25);    
-	menuitems[25].set();
+	menuitems[27].set();
+  	menuitems[28].set();	
     menubar->copy(menuitems, w);
     menubar->box(FL_THIN_UP_BOX);
     menubar->down_box(FL_BORDER_BOX);
@@ -2637,66 +3028,210 @@ Fl_Window* make_form() {
 
 	/////////////////////////////////////////////////////////////////////
 
-
-
-    w->editor = new Fl_Text_Editor_ext(pr_browsersize, 50, 660-tabs_size, 334);	//edited
-	te = w->editor;
 	
-    w->editor->buffer(textbuf);
-    w->editor->highlight_data(stylebuf, styletable,
-                              sizeof(styletable) / sizeof(styletable[0]),
-			      'A', style_unfinished_cb, 0);
-    w->editor->textfont(FL_COURIER);
-    w->editor->end();
-    
-	te->color(background_color);
-	te->mCursor_color = hl_plain;
+	//maintile = new Fl_Tile(0,50, 660, 333);
+	all_but_menu_grp = new My_Group_wo_Nav(0,50, 660, 333);
 	
-    w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,384,615,16,"Zeile 1"); 
 
-    w->outputwindowbutton = new Fl_Button(620,384,40,16,"Output");
-    w->outputwindowbutton->callback(owbt_callback);
-    w->outputwindowbutton->visible_focus(0);
-    w->outputwindowbutton->labelsize(10);
+	{
+		output_grp = new Fl_Group(0,50+233+1,660,99);
+		Fl_Tabs *ttab = new Fl_Tabs(output_grp->x(),output_grp->y()+7,output_grp->w(),output_grp->h()-6);
+		Fl_Group *tgrp = new Fl_Group(output_grp->x(),output_grp->y()+7+15,output_grp->w(),output_grp->h()-6-15,"Output");
+		
+	    	w->output = new My_Text_Editor2(tgrp->x(),tgrp->y(),tgrp->w(),tgrp->h());
+			w->output->highlight_data(op_stylebuf, op_styletable,
+		                              sizeof(op_styletable) / sizeof(op_styletable[0]),
+					      'A', style_unfinished_cb, 0);
+		    w->output->textsize(12);
+		    w->output->buffer(outputtb);
+		    w->output->when(FL_WHEN_CHANGED); 
+		    w->output->hide_cursor();
+		    w->output->output();
+		    
+		tgrp->labelsize(10);
+		tgrp->end();
+		
+		Fl_Group *tdgrp = new Fl_Group(tgrp->x(),tgrp->y(),tgrp->w(),tgrp->h(),"Debug");
+		tdgrp->labelsize(10);
+		
+			int button_x = 5;
+			int button_w = 50;
+	    	{
+	    		Fl_Button *o = new Fl_Button(output_grp->x()+button_x,output_grp->y()+7+31,button_w,20,"Run");
+	    		o->callback((Fl_Callback *)gdb_run_cb);
+	    	}
+	    	button_x += button_w + 5;
+	    	{
+	    		Fl_Button *o = new Fl_Button(output_grp->x()+button_x,output_grp->y()+7+31,button_w,20,"Step");
+	    		o->callback((Fl_Callback *)gdb_step_cb);
+	    	}
+	    	button_x += button_w + 5;
+	    	{
+	    		Fl_Button *o = new Fl_Button(output_grp->x()+button_x,output_grp->y()+7+31,button_w,20,"Next");
+	    		o->callback((Fl_Callback *)gdb_next_cb);
+	    	}
+	    	button_x += button_w + 5;
+	    	{
+	    		Fl_Button *o = new Fl_Button(output_grp->x()+button_x,output_grp->y()+7+31,button_w,20,"Kill");
+	    		o->callback((Fl_Callback *)gdb_kill_cb);
+	    	}
+	    	
+	    	
+		tdgrp->deactivate();    
+		
+		
+		tdgrp->resizable(NULL);
+		tdgrp->end();
+		ttab->resizable(tgrp);
+		ttab->end();
+		
+		    DragButton *o = new DragButton(0,output_grp->y()+1,output_grp->w(),4);
+		    o->box(FL_EMBOSSED_BOX);
+		    o->down_box(FL_NO_BOX);
+		    o->visible_focus(0);
+		    output_grp->resizable(ttab);
+		    
+		output_grp->end();
+	}
+	
+	
+	//Fl_Tile *
+	tile = new My_Tile_wo_Nav(0,50, 660, 233);
+	
+	gwn = new My_Group_wo_Nav(pr_browsersize, 50, 660-pr_browsersize, 233);
+		
+		Fl_Box *line_nr_box = new Fl_Box(gwn->x(),50,line_nr_size,gwn->h());
+		line_nr_box->box(FL_DOWN_BOX);
+		line_nr_box->align(FL_ALIGN_INSIDE | FL_ALIGN_RIGHT | FL_ALIGN_TOP);
+		line_nr_box->labelsize(TEXTSIZE);
+		line_nr_box->label("1\n2");
+		w->line_nr_box = line_nr_box;
+		
+	    w->editor = new Fl_Text_Editor_ext(gwn->x()+line_nr_size, 50, 660-pr_browsersize-line_nr_size, 233);	//edited
+			te = w->editor;	
+		    w->editor->buffer(textbuf);
+		    w->editor->highlight_data(stylebuf, styletable,
+		                              sizeof(styletable) / sizeof(styletable[0]),
+					      'A', style_unfinished_cb, 0);
+		    w->editor->textfont(FL_COURIER);    
+			te->color(background_color);
+			te->mCursor_color = hl_plain;
+	    w->editor->end();	
+    gwn->resizable(te);
+    gwn->end();
 
-    w->output = new My_Text_Editor2(0,285,660,99);
-	w->output->highlight_data(op_stylebuf, op_styletable,
-                              sizeof(op_styletable) / sizeof(op_styletable[0]),
-			      'A', style_unfinished_cb, 0);
-    w->output->textsize(12);
-    w->output->buffer(outputtb);
-    w->output->hide(); 
-    w->output->when(FL_WHEN_CHANGED); 
-    w->output->hide_cursor();
-    w->output->output();
-    w->output->end();
 
 	int browser_offset = 5;
-	w->tabs = new Fl_Tabs(0,50,pr_browsersize,334);
+	w->tabs = new Fl_Tabs(0,50,pr_browsersize,233);	
+	
+		
 		Fl_Group *o = new Fl_Group(0,w->tabs->y()+20,w->tabs->w(),w->tabs->h()-20,"Project");
-			w->pr_browser = new Fl_Hold_Browser(o->x(),o->y()+browser_offset,o->w(),o->h()-browser_offset);
+			//o->labeltype(FL_EMBOSSED_LABEL);
+			Fl_Tile *tt = new Fl_Tile(0,w->tabs->y()+20,w->tabs->w(),w->tabs->h()-20);
+			//int gheight = tt->h()-25;
+			int gheight = tt->h()/2;
+			//int gheight = tt->h();
+			{	
+				Fl_Group *tg = new Fl_Group(tt->x(),tt->y(),tt->w(),gheight);
+			 	browser_file_grp = tg;
+				{
+					Fl_Box *labelb = new Fl_Box(FL_EMBOSSED_BOX,tg->x(),tg->y()+2,tg->w()-2,20,"Files");
+					labelb->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);					
+					labelb->labeltype(FL_EMBOSSED_LABEL);
+					labelb->labelsize(12);
+					
+					file_pop_btn = new Fl_Menu_Button(tg->x(),tg->y()+2,0,0);
+					file_pop_btn->type(Fl_Menu_Button::POPUP3);
+					file_pop_btn->add("New/Source",0,file_source_cb);
+					file_pop_btn->add("New/Header",0,file_header_cb);
+					file_pop_btn->add("New/Form",0,file_form_cb);
+					
+					w->pr_browser = new Fl_File_Browser(tg->x(),tg->y()+22,tg->w()-2,tg->h()-22);
+					w->pr_browser->type(FL_HOLD_BROWSER);
+					w->pr_browser->iconsize(16);
+					tg->resizable(w->pr_browser);
+				}
+				tg->end();
+			}
+			
+			{
+				Fl_Group *tg = new Fl_Group(tt->x(),tt->y()+gheight,tt->w(),tt->h()-gheight);
+				browser_nav_grp = tg;
+				{
+					Fl_Box *labelb = new Fl_Box(FL_EMBOSSED_BOX,tt->x(),tg->y(),tg->w()-2,20,"Navigator");
+					labelb->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
+					labelb->labeltype(FL_EMBOSSED_LABEL);
+					labelb->labelsize(12);
+					
+					navigator_pop_btn = new Fl_Menu_Button(tt->x(),tg->y(),0,0);
+					navigator_pop_btn->type(Fl_Menu_Button::POPUP3);
+					navigator_pop_btn->add("Expand Classes",0,nav_exp_cb);
+					navigator_pop_btn->add("Normal Order",0,nav_norm_cb);
+					navigator_pop_btn->add("Sort by Name",0,nav_name_cb);
+					navigator_pop_btn->add("Sort by Return Type",0,nav_type_cb);
+				
+					//Fl_Hold_Browser *hb = new Fl_Hold_Browser(tt->x(),tg->y()+20,tg->w()-2,tg->h()-20);
+					NavBrowser *hb = new NavBrowser(tt->x(),tg->y()+20,tg->w()-2,tg->h()-20);
+					navigator_browser = hb;
+					navigator_browser->textsize(12);
+					navigator_browser->callback(navigator_browser_cb);
+					tg->box(FL_FLAT_BOX);
+					tg->resizable(hb);
+				}
+				tg->end();
+			}
+			tt->box(FL_FLAT_BOX);			
 			w->pr_browser->callback(pr_browser_cb);
+			tt->end();
+			
 			o->resizable(w->pr_browser);
+			
 		o->end();
 		o = new Fl_Group(0,w->tabs->y()+20,w->tabs->w(),w->tabs->h()-20,"Browse Dir");
-
-			w->fb_label = new Fl_Output(o->x(),o->y()+browser_offset,o->w()-20,20);
-			w->fb_label->value(strdup((getenv("PWD")+string("/")).c_str()));
-			w->fb_home_btn = new Fl_Button(o->x()+o->w()-19,o->y()+browser_offset,18,20,"~/");
-			w->fb_home_btn->box(FL_THIN_UP_BOX);
-			w->fb_home_btn->callback(home_cb);
+			//o->labeltype(FL_EMBOSSED_LABEL);
+			char buf[1024];
+			getcwd(buf,1024);
+			
+			w->fb_label = new Fl_Output(o->x(),o->y()+browser_offset,o->w()-25,20);
+			w->fb_label->value( strdup( (buf+string("/")).c_str() ) );
+			w->fb_home_btn = new Fl_Menu_Button(o->x()+o->w()-24,o->y()+browser_offset,23,20);
+			w->fb_home_btn->box(FL_THIN_UP_BOX);			
+			w->fb_home_btn->add("Home Dir",0,home_cb);				
+			w->fb_home_btn->add("Project Dir",0,projdir_cb);
+			
+			fb_pop_btn = new Fl_Menu_Button(o->x(),o->y()+browser_offset,0,0);
+			fb_pop_btn->type(Fl_Menu_Button::POPUP3);
+			fb_pop_btn->add("Show Hidden",0,fb_showhidden_cb);
+			
 			w->file_browser = new My_File_Browser(o->x(),o->y()+20+browser_offset,o->w(),o->h()-20-browser_offset);
-			w->file_browser->load(getenv("PWD"));
+			
+			w->file_browser->load(buf);
+			w->file_browser->iconsize(16);
 			w->file_browser->callback(file_browser_cb);
 			o->resizable(w->file_browser);
 		o->end();
 		w->tabs->resizable(o);
 	w->tabs->end();
-  
+	
+	tile->when(FL_WHEN_RELEASE);
+	tile->callback(tile_resize);
+	tile->end();	
+	
+	//maintile->resizable(te);
+	all_but_menu_grp->end();
+    //w->resizable(all_but_menu_grp);
+    w->resizable(tile);
+    
+    
+  	w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,384,615,16,"Zeile 1"); 
     w->statusbar->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     w->statusbar->labelsize(10);
-    w->resizable(w->editor);
-    w->callback((Fl_Callback *)quit_cb, w);
+    w->callback((Fl_Callback *)quit_cb, w);    
+
+    w->outputwindowbutton = new Fl_Button(620,384,40,16,"Output");
+    w->outputwindowbutton->callback(owbt_callback);
+    w->outputwindowbutton->visible_focus(0);
+    w->outputwindowbutton->labelsize(10);
 
     w->end();
     
@@ -2716,6 +3251,45 @@ Fl_Window* make_form() {
 
 
 
+void load_default_icons(void)
+{
+  Fl_File_Icon	*icon;		// New icons
+  char		filename[1024];	// Filename
+  static int	init = 0;	// Have the icons been initialized?
+  
+
+    {
+    
+      // Create the default icons...fldevicon_xpm
+      //
+      new Fl_File_Icon("*", Fl_File_Icon::PLAIN, sizeof(unknown_file_icon) / sizeof(unknown_file_icon[0]), unknown_file_icon);
+      
+      //new Fl_File_Icon("*", Fl_File_Icon::PLAIN, sizeof(plain) / sizeof(plain[0]), plain);
+      new Fl_File_Icon("*.{cpp|cxx|c|cc|CPP|CXX|C|CC}", Fl_File_Icon::PLAIN, sizeof(src_file_icon) / sizeof(src_file_icon[0]), src_file_icon);
+      new Fl_File_Icon("*.{h|hpp|H|HPP}", Fl_File_Icon::PLAIN, sizeof(hdr_file_icon) / sizeof(hdr_file_icon[0]), hdr_file_icon);
+      new Fl_File_Icon("*.{f|fl}", Fl_File_Icon::PLAIN, sizeof(fl_file_icon) / sizeof(fl_file_icon[0]), fl_file_icon);
+      
+      new Fl_File_Icon("*", Fl_File_Icon::DIRECTORY, sizeof(folder_file_icon) / sizeof(folder_file_icon[0]), folder_file_icon);
+      
+      
+      /*
+      Fl_File_Icon	*icon2 = new Fl_File_Icon("*", Fl_File_Icon::DIRECTORY, sizeof(folder_file_icon) / sizeof(folder_file_icon[0]), folder_file_icon);
+      icon2->load("conv_icon.png");
+      short *l = icon2->value();
+      cout << "static short icon[] = { ";
+      for(int i = 0; i < icon2->size(); i++)
+      {
+      		cout << l[i] << ", ";
+      }
+      cout << " }" << endl << flush;
+		*/
+    }
+
+    // Mark things as initialized...
+    init = 1;
+  
+}
+
 
 
 
@@ -2728,6 +3302,11 @@ int main(int argc, char **argv) {
   outputtb  = new Fl_Text_Buffer;
   style_init();
   op_stylebuf = new Fl_Text_Buffer();
+  
+  fl_register_images();
+  //Fl_File_Icon::load_system_icons();
+  load_default_icons();
+  
   window = (EditorWindow*)make_form();
   window->icon((char *)p);
   window->show(1,argv);
@@ -2776,12 +3355,18 @@ int main(int argc, char **argv) {
   int oldzeile = -1, oldspalte = -1;
 
   if(!project.assigned) {
-		for(int i = 0; i < 9; i++) menuitems[rec_pr_menu_index+i].deactivate();
+		for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].deactivate();
 		menubar->copy(menuitems, window);
   }
 
-  int old_ins_mode;
+  int old_ins_mode, old_first_line, old_last_line;
   
+  
+  window->hide_output();
+  window->hide_linenrs();
+  output_grp->size(output_grp->w(),100);
+  
+  if(show_nav == 0) show_nav_cb();
   
   while(1)
   {
@@ -2791,18 +3376,43 @@ int main(int argc, char **argv) {
  	int zeile = window->editor->count_lines(0,window->editor->insert_position(),0) + 1;
     int spalte = window->editor->insert_position() - window->editor->line_start(window->editor->insert_position());
   	int ins_mode = window->editor->insert_mode();
-        if(zeile != oldzeile || spalte != oldspalte || ins_mode != old_ins_mode)
+  	
+	int first_line;
+	int last_line;
+	te->get_line_nrs(&first_line, &last_line);
+	
+	if(window->line_nr_box->visible() && (first_line != old_first_line || last_line != old_last_line))
+	{		
+		line_label_str = "";	
+		for(int i = first_line; i < last_line; i++)
 		{
-			int gz = window->editor->count_lines(0,textbuf->length(),0)+1;
-			if(ins_mode) sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, insert_str.c_str());
-			else sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, overwrite_str.c_str());
-  			window->statusbar->label(b);
-			oldzeile = zeile;
-			oldspalte = spalte;
-			old_ins_mode = ins_mode;
+			char buf[20];
+			sprintf(buf,"%d\n",i);
+			line_label_str += buf; 		
 		}
+		//cout << first_line << " " << last_line << endl;
+		window->line_nr_box->label(line_label_str.c_str());
+		window->redraw();
+		old_first_line = first_line;
+		old_last_line = last_line;
+	}
+			
+    if(zeile != oldzeile || spalte != oldspalte || ins_mode != old_ins_mode)
+	{
+		int gz = window->editor->count_lines(0,textbuf->length(),0)+1;
+		if(ins_mode) sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, insert_str.c_str());
+		else sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, overwrite_str.c_str());
+ 			window->statusbar->label(b);
+		oldzeile = zeile;
+		oldspalte = spalte;
+		old_ins_mode = ins_mode;
+	}
+	
+	
+	usleep(500);
 	//Fl::focus(window);
 		
   }
+  free(hints);
   return 1;
 }

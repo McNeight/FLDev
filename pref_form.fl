@@ -50,7 +50,16 @@ decl {extern char usrdocdir[256];} {public
 decl {int save_window_size;} {public
 } 
 
+decl {bool auto_brace_mode;} {public
+} 
+
 decl {int auto_hide;} {public
+} 
+
+decl {int delbak;} {public
+} 
+
+decl {int backup_file;} {public
 } 
 
 Function {make_pref_form()} {open
@@ -62,6 +71,7 @@ Function {make_pref_form()} {open
     Fl_Button pref_ok_btn {
       label OK
       callback {text_size = text_size_choice->value() * 2 + 6;
+auto_brace_mode = auto_brace_check->value();
 save_window_size = save_wsoe_check->value();
 auto_hide = hide_output_check->value();
 hl_plain = plain_btn->color();
@@ -74,7 +84,9 @@ hl_keyword = keyword_btn->color();
 hl_character = character_btn->color();
 background_color = bg_btn->color();
 sprintf(usrdocdir,"%s",usrdoc_input->value());
-pref_window->hide();}
+backup_file = bak_check->value();
+delbak = delbak_check->value();
+pref_window->hide();} selected
       xywh {345 295 85 25}
     }
     Fl_Button pref_cancel_btn {
@@ -99,20 +111,20 @@ pref_window->hide();}
           code1 {text_size_choice->value(3);}
         } {}
         Fl_Check_Button smart_indent_check {
-          label {Use Auto-Indent Option} selected
+          label {Use Auto-Indent Option}
           xywh {30 95 180 25} down_box DOWN_BOX
         }
         Fl_Check_Button save_wsoe_check {
           label {Save Window Size On Exit}
-          xywh {30 120 195 25} down_box DOWN_BOX
+          xywh {30 145 195 25} down_box DOWN_BOX
         }
         Fl_Check_Button hide_output_check {
           label {Auto-hide Output Window}
-          xywh {30 145 195 25} down_box DOWN_BOX
+          xywh {30 170 195 25} down_box DOWN_BOX
         }
         Fl_Check_Button rec_pr_check {
           label {Open previous project on startup}
-          xywh {30 170 235 25} down_box DOWN_BOX
+          xywh {30 195 235 25} down_box DOWN_BOX
         }
         Fl_Box pref_highlight_label {
           label {Highlight Colors}
@@ -162,6 +174,18 @@ pref_window->hide();}
           label Background
           callback {bg_btn->color(fl_show_colormap(bg_btn->color()));}
           xywh {320 250 15 15} align 8
+        }
+        Fl_Check_Button auto_brace_check {
+          label {Use Auto-Brace Option}
+          xywh {30 120 180 25} down_box DOWN_BOX
+        }
+        Fl_Check_Button bak_check {
+          label {Create backup when loading file}
+          xywh {30 220 235 25} down_box DOWN_BOX
+        }
+        Fl_Check_Button delbak_check {
+          label {Delete backup files on exit}
+          xywh {30 245 235 25} down_box DOWN_BOX
         }
       }
       Fl_Group env_group {

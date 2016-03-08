@@ -85,6 +85,51 @@ static void cb_phdr(Fl_Input*, void*) {
   pr_changed = true;
 }
 
+Fl_Input *pgui=(Fl_Input *)0;
+
+static void cb_pgui(Fl_Input*, void*) {
+  pr_changed = true;
+}
+
+static void cb_add(Fl_Button*, void*) {
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	psrc->value(trim(string(psrc->value())+ " " + rel).c_str());
+	pr_changed = true;
+};
+}
+
+static void cb_add1(Fl_Button*, void*) {
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	phdr->value(trim(string(phdr->value())+ " " + rel).c_str());
+	pr_changed = true;
+};
+}
+
+static void cb_add2(Fl_Button*, void*) {
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	pgui->value(trim(string(pgui->value())+ " " + rel).c_str());
+	pr_changed = true;
+};
+}
+
 static void cb_OK(Fl_Button*, void*) {
   project_options_window->hide();
 }
@@ -100,6 +145,7 @@ Fl_Double_Window* make_proj_window() {
     w = o;
     { Fl_Tabs* o = pr_op_tabs = new Fl_Tabs(10, 10, 400, 205);
       { Fl_Group* o = pr_op_pr_grp = new Fl_Group(10, 35, 400, 180, "Project");
+        o->hide();
         { Fl_Input* o = pname = new Fl_Input(135, 60, 255, 25, "Project Name");
           o->callback((Fl_Callback*)cb_pname);
           o->when(FL_WHEN_CHANGED);
@@ -148,16 +194,29 @@ Fl_Double_Window* make_proj_window() {
         o->end();
       }
       { Fl_Group* o = pr_op_fi_grp = new Fl_Group(10, 35, 400, 170, "Files");
-        o->hide();
-        { Fl_Input* o = psrc = new Fl_Input(55, 75, 320, 25, "Sources");
+        { Fl_Input* o = psrc = new Fl_Input(35, 60, 320, 25, "Sources");
           o->callback((Fl_Callback*)cb_psrc);
           o->align(133);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = phdr = new Fl_Input(55, 140, 320, 25, "Headers");
+        { Fl_Input* o = phdr = new Fl_Input(35, 105, 320, 25, "Headers");
           o->callback((Fl_Callback*)cb_phdr);
           o->align(133);
           o->when(FL_WHEN_CHANGED);
+        }
+        { Fl_Input* o = pgui = new Fl_Input(35, 160, 320, 25, "Fluid GUI Files");
+          o->callback((Fl_Callback*)cb_pgui);
+          o->align(133);
+          o->when(FL_WHEN_CHANGED);
+        }
+        { Fl_Button* o = new Fl_Button(360, 60, 35, 25, "add");
+          o->callback((Fl_Callback*)cb_add);
+        }
+        { Fl_Button* o = new Fl_Button(360, 105, 35, 25, "add");
+          o->callback((Fl_Callback*)cb_add1);
+        }
+        { Fl_Button* o = new Fl_Button(360, 160, 35, 25, "add");
+          o->callback((Fl_Callback*)cb_add2);
         }
         o->end();
       }

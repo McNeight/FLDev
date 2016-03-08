@@ -15,6 +15,7 @@ Cu&t:A&usschneiden
 &Copy:&Kopieren
 &Paste:Einfügen
 &Delete:Löschen
+C&omment out:Ausk&ommentieren
 &Indent Selection:Auswahl einrücken
 U&nindent Selection:Auswahl ausrücken
 Pre&ferences...:Einstellungen...
@@ -88,29 +89,31 @@ Replace Next:Ersetzen
 12:Das Schreiben der Datei ist fehlgeschlagen.
 13:Das Programm wird bereits ausgeführt.
 14:Name der ausführbaren Datei nicht angegeben.\nÜberprüfen sie die Projekt-Optionen!
-15:Keine Vorkommen von \'%s\' gefunden.
+15:Keine Vorkommen von '%s' gefunden.
 16:Fehler beim Lesen der Konfigurationsdatei.
 17:Projekt-Datei nicht gefunden!
 
 #original messages
-strmsg[0]="Cpp-Reference not found!\nDo you want to download?";
-strmsg[1]="The current file has not been saved.\nWould you like to save it now?";
-strmsg[2]="The current Project has not been saved.\nWould you like to save it now?";
-strmsg[3]="Open File?";
-strmsg[4]="Insert File?";
-strmsg[5]="Open Project File";
-strmsg[6]="Rebuild Makefile?";
-strmsg[7]="Save File As?";
-strmsg[8]="Search String";
-strmsg[9]="Replaced %d occurrences.";
-strmsg[10]="You have to restart FLDev!";  
-strmsg[11]="Error reading from file";
-strmsg[12]="Error writing to file";
-strmsg[13]="Program already running!";
-strmsg[14]="Name of executable file not defined.\nCheck project options!";
-strmsg[15]="No occurrences of \'%s\' found!";
-strmsg[16]="Error reading config file!";
-strmsg[17]="Projekt File not found!";
+#################################################
+# strmsg[0]="Cpp-Reference not found!\nDo you want to download?";
+# strmsg[1]="The current file has not been saved.\nWould you like to save it now?";
+# strmsg[2]="The current Project has not been saved.\nWould you like to save it now?";
+# strmsg[3]="Open File?";
+# strmsg[4]="Insert File?";
+# strmsg[5]="Open Project File";
+# strmsg[6]="Rebuild Makefile?";
+# strmsg[7]="Save File As?";
+# strmsg[8]="Search String";
+# strmsg[9]="Replaced %d occurrences.";
+# strmsg[10]="You have to restart FLDev!";  
+# strmsg[11]="Error reading from file";
+# strmsg[12]="Error writing to file";
+# strmsg[13]="Program already running!";
+# strmsg[14]="Name of executable file not defined.\nCheck project options!";
+# strmsg[15]="No occurrences of '%s' found!";
+# strmsg[16]="Error reading config file!";
+# strmsg[17]="Projekt File not found!";
+##################################################
 
 [Pref]
 Preferences:Einstellungen

@@ -19,7 +19,10 @@ extern Fl_Color hl_character;
 extern Fl_Color background_color;
 extern char usrdocdir[256];
 extern int save_window_size;
+extern bool auto_brace_mode;
 extern int auto_hide;
+extern int delbak;
+extern int backup_file;
 #include <FL/Fl_Double_Window.H>
 extern Fl_Double_Window *pref_window;
 #include <FL/Fl_Button.H>
@@ -47,6 +50,9 @@ extern Fl_Button *type_btn;
 extern Fl_Button *keyword_btn;
 extern Fl_Button *character_btn;
 extern Fl_Button *bg_btn;
+extern Fl_Check_Button *auto_brace_check;
+extern Fl_Check_Button *bak_check;
+extern Fl_Check_Button *delbak_check;
 extern Fl_Group *env_group;
 #include <FL/Fl_Input.H>
 extern Fl_Input *usrdoc_input;

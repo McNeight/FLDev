@@ -2,6 +2,9 @@
 version 1.0104 
 header_name {.h} 
 code_name {.cpp}
+decl {\#include "globals.h"} {public
+} 
+
 decl {int pr_changed;} {public
 } 
 
@@ -15,8 +18,8 @@ Function {make_proj_window()} {open
       xywh {10 10 400 205}
     } {
       Fl_Group pr_op_pr_grp {
-        label Project selected
-        xywh {10 35 400 180}
+        label Project
+        xywh {10 35 400 180} hide
       } {
         Fl_Input pname {
           label {Project Name}
@@ -75,18 +78,65 @@ Function {make_proj_window()} {open
         }
       }
       Fl_Group pr_op_fi_grp {
-        label Files
-        xywh {10 35 400 170} hide
+        label Files open
+        xywh {10 35 400 170}
       } {
         Fl_Input psrc {
           label Sources
           callback {pr_changed = true;}
-          xywh {55 75 320 25} align 133 when 1
+          xywh {35 60 320 25} align 133 when 1
         }
         Fl_Input phdr {
           label Headers
           callback {pr_changed = true;}
-          xywh {55 140 320 25} align 133 when 1
+          xywh {35 105 320 25} align 133 when 1
+        }
+        Fl_Input pgui {
+          label {Fluid GUI Files}
+          callback {pr_changed = true;}
+          xywh {35 160 320 25} align 133 when 1
+        }
+        Fl_Button {} {
+          label add
+          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	psrc->value(trim(string(psrc->value())+ " " + rel).c_str());
+	pr_changed = true;
+}}
+          xywh {360 60 35 25}
+        }
+        Fl_Button {} {
+          label add
+          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	phdr->value(trim(string(phdr->value())+ " " + rel).c_str());
+	pr_changed = true;
+}}
+          xywh {360 105 35 25}
+        }
+        Fl_Button {} {
+          label add
+          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	pgui->value(trim(string(pgui->value())+ " " + rel).c_str());
+	pr_changed = true;
+}} selected
+          xywh {360 160 35 25}
         }
       }
     }
