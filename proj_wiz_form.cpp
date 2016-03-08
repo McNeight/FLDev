@@ -32,19 +32,21 @@ Fl_Round_Button *x_app=(Fl_Round_Button *)0;
 
 Fl_Round_Button *con_app=(Fl_Round_Button *)0;
 
+Fl_Check_Button *main_cpp_chk=(Fl_Check_Button *)0;
+
 Fl_Double_Window* make_proj_wizard() {
   Fl_Double_Window* w;
-  { Fl_Double_Window* o = proj_wiz = new Fl_Double_Window(500, 210, "New Project");
+  { Fl_Double_Window* o = proj_wiz = new Fl_Double_Window(503, 248, "New Project");
     w = o;
     pr_dir_input = new Fl_Input(130, 65, 320, 25, "Project Directory:");
     { Fl_Button* o = pr_wiz_browse_btn = new Fl_Button(450, 65, 35, 25, "...");
       o->callback((Fl_Callback*)cb_pr_wiz_browse_btn);
     }
     pr_name_input = new Fl_Input(130, 25, 320, 25, "Project Name:");
-    { Fl_Button* o = pr_wiz_ok_btn = new Fl_Button(320, 170, 80, 25, "OK");
+    { Fl_Button* o = pr_wiz_ok_btn = new Fl_Button(320, 205, 80, 25, "OK");
       o->callback((Fl_Callback*)cb_pr_wiz_ok_btn);
     }
-    { Fl_Button* o = pr_wiz_cancel_btn = new Fl_Button(410, 170, 80, 25, "Cancel");
+    { Fl_Button* o = pr_wiz_cancel_btn = new Fl_Button(410, 205, 80, 25, "Cancel");
       o->callback((Fl_Callback*)cb_pr_wiz_cancel_btn);
     }
     { Fl_Group* o = new Fl_Group(130, 100, 145, 50, "Type:");
@@ -60,6 +62,9 @@ Fl_Double_Window* make_proj_wizard() {
         con_app->value(1);
       }
       o->end();
+    }
+    { Fl_Check_Button* o = main_cpp_chk = new Fl_Check_Button(130, 165, 155, 25, "Generate \'main.cpp\'");
+      o->down_box(FL_DOWN_BOX);
     }
     o->set_modal();
     o->end();

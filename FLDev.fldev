@@ -8,5 +8,5 @@ fldev
 
 -Os
 0
-editor.cpp pref_form.cpp proj_form.cpp proj_wiz_form.cpp extras.cpp
-pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
+editor.cpp pref_form.cpp proj_form.cpp proj_wiz_form.cpp extras.cpp My_Text_Display.cpp My_Text_Editor.cpp
+pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h My_Text_Display.h My_Text_Editor.h

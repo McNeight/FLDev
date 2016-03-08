@@ -3,7 +3,17 @@
 #ifndef pref_form_h
 #define pref_form_h
 #include <FL/Fl.H>
+#include <FL/fl_show_colormap.H>
 extern int text_size;
+extern Fl_Color hl_plain;
+extern Fl_Color hl_linecomment;
+extern Fl_Color hl_blockcomment;
+extern Fl_Color hl_string;
+extern Fl_Color hl_directive;
+extern Fl_Color hl_type;
+extern Fl_Color hl_keyword;
+extern Fl_Color hl_character;
+extern Fl_Color background_color;
 extern int save_window_size;
 extern int auto_hide;
 #include <FL/Fl_Double_Window.H>
@@ -19,5 +29,14 @@ extern Fl_Check_Button *smart_indent_check;
 extern Fl_Check_Button *save_wsoe_check;
 extern Fl_Check_Button *hide_output_check;
 extern Fl_Check_Button *rec_pr_check;
+extern Fl_Button *plain_btn;
+extern Fl_Button *line_btn;
+extern Fl_Button *block_btn;
+extern Fl_Button *string_btn;
+extern Fl_Button *directive_btn;
+extern Fl_Button *type_btn;
+extern Fl_Button *keyword_btn;
+extern Fl_Button *character_btn;
+extern Fl_Button *bg_btn;
 Fl_Double_Window* make_pref_form();
 #endif

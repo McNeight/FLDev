@@ -13,6 +13,15 @@ static void cb_pref_ok_btn(Fl_Button*, void*) {
   text_size = text_size_choice->value() * 2 + 6;
 save_window_size = save_wsoe_check->value();
 auto_hide = hide_output_check->value();
+hl_plain = plain_btn->color();
+hl_linecomment = line_btn->color();
+hl_blockcomment = block_btn->color();
+hl_string = string_btn->color();
+hl_directive = directive_btn->color();
+hl_type = type_btn->color();
+hl_keyword = keyword_btn->color();
+hl_character = character_btn->color();
+background_color = bg_btn->color();
 pref_window->hide();
 }
 
@@ -32,6 +41,60 @@ Fl_Check_Button *hide_output_check=(Fl_Check_Button *)0;
 
 Fl_Check_Button *rec_pr_check=(Fl_Check_Button *)0;
 
+Fl_Button *plain_btn=(Fl_Button *)0;
+
+static void cb_plain_btn(Fl_Button*, void*) {
+  plain_btn->color(fl_show_colormap(plain_btn->color()));
+}
+
+Fl_Button *line_btn=(Fl_Button *)0;
+
+static void cb_line_btn(Fl_Button*, void*) {
+  line_btn->color(fl_show_colormap(line_btn->color()));
+}
+
+Fl_Button *block_btn=(Fl_Button *)0;
+
+static void cb_block_btn(Fl_Button*, void*) {
+  block_btn->color(fl_show_colormap(block_btn->color()));
+}
+
+Fl_Button *string_btn=(Fl_Button *)0;
+
+static void cb_string_btn(Fl_Button*, void*) {
+  string_btn->color(fl_show_colormap(string_btn->color()));
+}
+
+Fl_Button *directive_btn=(Fl_Button *)0;
+
+static void cb_directive_btn(Fl_Button*, void*) {
+  directive_btn->color(fl_show_colormap(directive_btn->color()));
+}
+
+Fl_Button *type_btn=(Fl_Button *)0;
+
+static void cb_type_btn(Fl_Button*, void*) {
+  type_btn->color(fl_show_colormap(type_btn->color()));
+}
+
+Fl_Button *keyword_btn=(Fl_Button *)0;
+
+static void cb_keyword_btn(Fl_Button*, void*) {
+  keyword_btn->color(fl_show_colormap(keyword_btn->color()));
+}
+
+Fl_Button *character_btn=(Fl_Button *)0;
+
+static void cb_character_btn(Fl_Button*, void*) {
+  character_btn->color(fl_show_colormap(character_btn->color()));
+}
+
+Fl_Button *bg_btn=(Fl_Button *)0;
+
+static void cb_bg_btn(Fl_Button*, void*) {
+  bg_btn->color(fl_show_colormap(bg_btn->color()));
+}
+
 Fl_Double_Window* make_pref_form() {
   Fl_Double_Window* w;
   { Fl_Double_Window* o = pref_window = new Fl_Double_Window(525, 330, "Preferences");
@@ -46,22 +109,63 @@ Fl_Double_Window* make_pref_form() {
     { Fl_Button* o = pref_cancel_btn = new Fl_Button(435, 295, 80, 25, "Cancel");
       o->callback((Fl_Callback*)cb_pref_cancel_btn);
     }
-    { Fl_Choice* o = text_size_choice = new Fl_Choice(95, 35, 60, 25, "Text Size");
+    { Fl_Choice* o = text_size_choice = new Fl_Choice(95, 30, 60, 25, "Text Size");
       o->down_box(FL_BORDER_BOX);
       text_size_choice->add("6");text_size_choice->add("8");text_size_choice->add("10");text_size_choice->add("12");text_size_choice->add("14");text_size_choice->add("16");text_size_choice->add("18");text_size_choice->add("20");
       text_size_choice->value(3);
     }
-    { Fl_Check_Button* o = smart_indent_check = new Fl_Check_Button(30, 65, 180, 25, "Use Smart-Indent Option");
+    { Fl_Check_Button* o = smart_indent_check = new Fl_Check_Button(30, 95, 180, 25, "Use Smart-Indent Option");
       o->down_box(FL_DOWN_BOX);
     }
-    { Fl_Check_Button* o = save_wsoe_check = new Fl_Check_Button(30, 90, 195, 25, "Save Window Size On Exit");
+    { Fl_Check_Button* o = save_wsoe_check = new Fl_Check_Button(30, 120, 195, 25, "Save Window Size On Exit");
       o->down_box(FL_DOWN_BOX);
     }
-    { Fl_Check_Button* o = hide_output_check = new Fl_Check_Button(30, 115, 195, 25, "Auto-hide Output Window");
+    { Fl_Check_Button* o = hide_output_check = new Fl_Check_Button(30, 145, 195, 25, "Auto-hide Output Window");
       o->down_box(FL_DOWN_BOX);
     }
-    { Fl_Check_Button* o = rec_pr_check = new Fl_Check_Button(30, 140, 235, 25, "Open previous project on startup");
+    { Fl_Check_Button* o = rec_pr_check = new Fl_Check_Button(30, 170, 235, 25, "Open previous project on startup");
       o->down_box(FL_DOWN_BOX);
+    }
+    { Fl_Box* o = new Fl_Box(275, 25, 230, 250, "Highlight Colors");
+      o->box(FL_ENGRAVED_BOX);
+      o->labeltype(FL_ENGRAVED_LABEL);
+      o->align(FL_ALIGN_TOP_LEFT|FL_ALIGN_INSIDE);
+    }
+    { Fl_Button* o = plain_btn = new Fl_Button(305, 60, 15, 15, "Plain Text");
+      o->callback((Fl_Callback*)cb_plain_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = line_btn = new Fl_Button(305, 80, 15, 15, "Line Comments");
+      o->callback((Fl_Callback*)cb_line_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = block_btn = new Fl_Button(305, 100, 15, 15, "Block Comments");
+      o->callback((Fl_Callback*)cb_block_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = string_btn = new Fl_Button(305, 120, 15, 15, "Strings");
+      o->callback((Fl_Callback*)cb_string_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = directive_btn = new Fl_Button(305, 140, 15, 15, "Directives");
+      o->callback((Fl_Callback*)cb_directive_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = type_btn = new Fl_Button(305, 160, 15, 15, "Types");
+      o->callback((Fl_Callback*)cb_type_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = keyword_btn = new Fl_Button(305, 180, 15, 15, "Keywords");
+      o->callback((Fl_Callback*)cb_keyword_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = character_btn = new Fl_Button(305, 200, 15, 15, "Characters");
+      o->callback((Fl_Callback*)cb_character_btn);
+      o->align(FL_ALIGN_RIGHT);
+    }
+    { Fl_Button* o = bg_btn = new Fl_Button(305, 240, 15, 15, "Background");
+      o->callback((Fl_Callback*)cb_bg_btn);
+      o->align(FL_ALIGN_RIGHT);
     }
     o->set_modal();
     o->end();

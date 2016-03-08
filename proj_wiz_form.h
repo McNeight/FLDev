@@ -18,5 +18,7 @@ extern Fl_Button *pr_wiz_cancel_btn;
 #include <FL/Fl_Round_Button.H>
 extern Fl_Round_Button *x_app;
 extern Fl_Round_Button *con_app;
+#include <FL/Fl_Check_Button.H>
+extern Fl_Check_Button *main_cpp_chk;
 Fl_Double_Window* make_proj_wizard();
 #endif

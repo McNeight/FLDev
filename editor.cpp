@@ -4,7 +4,7 @@
 		
 		Lightweight Integrated Development Environment
 
-		version:	0.5.4
+		version:	0.5.5
 		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
@@ -28,7 +28,8 @@
 */
 /////////////////////////////////////////////////////////////////////////////////////////////
 
-	
+
+
 
 // TODO:
 /*
@@ -56,6 +57,7 @@
 
 #include <FL/Fl.H>
 #include <FL/x.H>
+
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
@@ -80,7 +82,7 @@
 #include "extras.h" 
 
 
- 
+  
 using namespace std;
 
 class EditorWindow;
@@ -94,6 +96,17 @@ bool hidden = true, cppfile, filelistopen=false, make_error = false, exec_runnin
 int linecount;
 int num_windows = 0;
 int loading = 0;
+
+
+Fl_Color hl_plain = FL_BLACK;
+Fl_Color hl_linecomment = FL_DARK_GREEN;
+Fl_Color hl_blockcomment = FL_DARK_GREEN;
+Fl_Color hl_string = FL_BLUE;
+Fl_Color hl_directive = FL_DARK_MAGENTA;
+Fl_Color hl_type = FL_DARK_RED;
+Fl_Color hl_keyword = FL_BLUE;
+Fl_Color hl_character = FL_DARK_RED;
+Fl_Color background_color = FL_WHITE;
 
 Fl_Text_Editor_ext 		*te;
 Fl_Text_Buffer     *textbuf = 0;
@@ -138,9 +151,6 @@ void generate_makefile_cb();
 
 
 
-
-
-
 // Syntax highlighting stuff...
 Fl_Text_Buffer     *stylebuf = 0;
 Fl_Text_Buffer		*op_stylebuf = 0;
@@ -154,16 +164,16 @@ Fl_Text_Display::Style_Table_Entry
 		     { FL_RED, 		  FL_HELVETICA, TEXTSIZE } 	// B - Error
 		   };
 
-Fl_Text_Display::Style_Table_Entry
+My_Text_Display::Style_Table_Entry
                    styletable[] = {	// Style table
-		     { FL_BLACK,      FL_COURIER,        TEXTSIZE }, // A - Plain
-		     { FL_DARK_GREEN, FL_COURIER_ITALIC, TEXTSIZE }, // B - Line comments
-		     { FL_DARK_GREEN, FL_COURIER_ITALIC, TEXTSIZE }, // C - Block comments
-		     { FL_BLUE,       FL_COURIER,        TEXTSIZE }, // D - Strings
-		     { FL_DARK_MAGENTA,   FL_COURIER,        TEXTSIZE }, // E - Directives
-		     { FL_DARK_RED,   FL_COURIER_BOLD,   TEXTSIZE }, // F - Types
-		     { FL_BLUE,       FL_COURIER_BOLD,   TEXTSIZE }, // G - Keywords
-		     { FL_DARK_RED,    FL_COURIER,        TEXTSIZE }  // H - Character
+		     { hl_plain,      FL_COURIER,        TEXTSIZE }, // A - Plain
+		     { hl_linecomment, FL_COURIER_ITALIC, TEXTSIZE }, // B - Line comments
+		     { hl_blockcomment, FL_COURIER_ITALIC, TEXTSIZE }, // C - Block comments
+		     { hl_string,       FL_COURIER,        TEXTSIZE }, // D - Strings
+		     { hl_directive,   FL_COURIER,        TEXTSIZE }, // E - Directives
+		     { hl_type,   FL_COURIER_BOLD,   TEXTSIZE }, // F - Types
+		     { hl_keyword,       FL_COURIER_BOLD,   TEXTSIZE }, // G - Keywords
+		     { hl_character,    FL_COURIER,        TEXTSIZE }  // H - Character
 		   };
 
 
@@ -488,7 +498,7 @@ style_update(	int        pos,		// I - Position of update
 
 
   stylebuf->replace(start, end, style);
-  ((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+  ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
 
   //if ((last != style[end - start - 1]) || stringdeleted || style[end - start - 1] == 'D') 
   {
@@ -505,7 +515,7 @@ style_update(	int        pos,		// I - Position of update
     style_parse(text, style, end - start);
 
     stylebuf->replace(start, end, style);
-    ((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+    ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
   }
 
   free(text);
@@ -523,9 +533,9 @@ style_update(	int        pos,		// I - Position of update
 
 
 
-class My_Text_Editor : public Fl_Text_Editor {
+class My_Text_Editor2 : public Fl_Text_Editor {
   public:
-	My_Text_Editor(int x, int y, int w, int h) : Fl_Text_Editor(x,y,w,h) {};
+	My_Text_Editor2(int x, int y, int w, int h) : Fl_Text_Editor(x,y,w,h) {};
     int handle(int event) {
 		if (!buffer()) return 0;
   	
@@ -574,7 +584,8 @@ class My_Text_Editor : public Fl_Text_Editor {
 				}
 			}
 		}
-		if(event==FL_MOUSEWHEEL) return mVScrollBar->handle(event);
+		else if(event==FL_MOUSEWHEEL) return mVScrollBar->handle(event);
+		else return 0;
 	};
 
 	int linepos(int line) {
@@ -626,7 +637,7 @@ class EditorWindow : public Fl_Double_Window {
     Fl_Output			*fb_label;	
 	Fl_Button			*fb_home_btn;
     Fl_Text_Editor_ext 	*editor;
-    My_Text_Editor		*output;
+    My_Text_Editor2		*output;
 
 	My_File_Browser	 	*file_browser;
 	Fl_Hold_Browser 	*pr_browser;
@@ -807,7 +818,7 @@ void save_file(char *newfile) {
 
 void copy_cb(Fl_Widget*, void* v) {
   	EditorWindow* e = window;
-  	Fl_Text_Editor::kf_copy(0, e->editor);
+  	Fl_Text_Editor_ext::kf_copy(0, e->editor);
 	Fl::focus(e->editor);
 }
 
@@ -815,7 +826,7 @@ void copy_cb(Fl_Widget*, void* v) {
 
 void cut_cb(Fl_Widget*, void* v) {
   	EditorWindow* e = window;
-  	Fl_Text_Editor::kf_cut(0, e->editor);
+  	Fl_Text_Editor_ext::kf_cut(0, e->editor);
 	Fl::focus(e->editor);
 }
 
@@ -823,13 +834,13 @@ void cut_cb(Fl_Widget*, void* v) {
 
 void paste_cb(Fl_Widget*, void* v) {
 	EditorWindow* e = window;
-	Fl_Text_Editor::kf_paste(0, e->editor);
+	Fl_Text_Editor_ext::kf_paste(0, e->editor);
 	Fl::focus(e->editor);
 }
 
 void undo_cb(Fl_Widget*, void* v) {
 	EditorWindow* e = window;
-	Fl_Text_Editor::kf_undo(0, e->editor);
+	Fl_Text_Editor_ext::kf_undo(0, e->editor);
 	Fl::focus(e->editor);
 }
 
@@ -882,7 +893,8 @@ void run_cb(Fl_Widget* w, void* v) {
   }
   else {
   	buf = command+" &";
-	ptr = popen(buf.c_str(),"r");
+	ptr = popen((buf + " >/dev/null 2>&1").c_str(),"r");
+	 
 	pclose(ptr);
   }
   exec_running = false;
@@ -1259,7 +1271,7 @@ void munindent_cb() {
 
 
 void about_cb() {
-	fl_message("FLDev IDE\nVersion 0.5.4\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
+	fl_message("FLDev IDE\nVersion 0.5.5\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
 }
 
 
@@ -1441,22 +1453,33 @@ void new_pr_cb() {
 	console_check->value(1);
   }
   
-  project.src_files = "main.cpp";
-  project.header_files = "";
 
   chdir(project.pr_dir.c_str());
-  build_template_main();
+  
+  window->pr_browser->clear();
+  project.src_files = " ";
+  project.header_files = "";
+  
+  //build main.cpp
+  if(main_cpp_chk->value()) {
+	  project.src_files = "main.cpp";
+	  project.header_files = "";
+	  build_template_main();
+	  generate_makefile_cb();
+	  project.addToBrowser(window->pr_browser);
+	  load_file( (char *)(window->pr_browser)->text(1) , -1 );
+	  add_recent_file_to_menu(filename);
+  }
+  else new_cb(0,0);
   project.save();
   project.load();
-  generate_makefile_cb();
-
-  project.addToBrowser(window->pr_browser);
-  load_file( (char *)(window->pr_browser)->text(1) , -1 );
+  
 
   for(int i = 0; i < 8; i++) menuitems[rec_pr_menu_index+i].activate();
   menubar->copy(menuitems, window);
-
-  add_recent_file_to_menu(filename);
+  add_recent_project_to_menu(strdup(project.pr_filename.c_str()));
+  
+  //set_title(window);
 }
 
 
@@ -1464,6 +1487,18 @@ void pref_cb(Fl_Widget*, void*) {
 	text_size_choice->value((text_size - 6)/2);
 	save_wsoe_check->value(save_window_size);
 	hide_output_check->value(auto_hide);
+	
+	plain_btn->color(hl_plain);
+	line_btn->color(hl_linecomment);
+	block_btn->color(hl_blockcomment);
+	string_btn->color(hl_string);
+	directive_btn->color(hl_directive);
+	type_btn->color(hl_type);
+	keyword_btn->color(hl_keyword);
+	character_btn->color(hl_character);
+	bg_btn->color(background_color);
+
+
 	pref_window->show();
 	while(pref_window->visible()) {Fl::wait(5);}
 	set_text_size(text_size);
@@ -1673,9 +1708,6 @@ done\n",homedir);
 		ptr = popen("rm -rf html ","r");
 		pclose(ptr);
 		
-		ptr = popen("rm -f p.sh ","r");
-		pclose(ptr);
-
 		return 1;
 	}
 }
@@ -1722,7 +1754,34 @@ void load_config_file()
 	FILE *ptr = fopen(buf,"r");
 
 	if(ptr != NULL) {
-		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n",&save_window_size,&x,&y,&w,&h,&auto_hide,&text_size,scheme,file1,file2,file3,file4,pr1,pr2,pr3,pr4,&sm_in,&rp_al)) {
+		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+					&save_window_size,
+					&x,
+					&y,
+					&w,
+					&h,
+					&auto_hide,
+					&text_size,
+					scheme,
+					file1,
+					file2,
+					file3,
+					file4,
+					pr1,
+					pr2,
+					pr3,
+					pr4,
+					&sm_in,
+					&rp_al,//
+					&hl_plain,
+					&hl_linecomment,
+					&hl_blockcomment,
+					&hl_string,
+					&hl_directive,
+					&hl_type,
+					&hl_keyword,
+					&hl_character,
+					&background_color )) {
 			if(strlen(file4)>3) add_recent_file_to_menu(file4+3);
 			if(strlen(file3)>3) add_recent_file_to_menu(file3+3);
 			if(strlen(file2)>3) add_recent_file_to_menu(file2+3);
@@ -1760,9 +1819,18 @@ void save_config_file()
 
 	if(ptr != NULL) 
 	{
-		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
+		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
 				menuitems[4].label(),menuitems[5].label(),menuitems[6].label(),menuitems[7].label(),
-				menuitems[startitem+4].label(),menuitems[startitem+5].label(),menuitems[startitem+6].label(),menuitems[startitem+7].label(),te->smart_indent,rec_pr_check->value());
+				menuitems[startitem+4].label(),menuitems[startitem+5].label(),menuitems[startitem+6].label(),menuitems[startitem+7].label(),te->smart_indent,rec_pr_check->value(),
+				hl_plain,
+				hl_linecomment,
+				hl_blockcomment,
+				hl_string,
+				hl_directive,
+				hl_type,
+				hl_keyword,
+				hl_character,
+				background_color);
 		fclose(ptr);
 	}
 
@@ -1834,7 +1902,9 @@ void recent_project_cb(Fl_Widget* w, void *v)
 				chdir(dir);
 		  }
 		  project.addToBrowser(window->pr_browser); 
-		  load_file( (char *)window->pr_browser->text(1) , -1 );
+		  if(window->pr_browser->text(1)!=NULL)
+		  	load_file( (char *)window->pr_browser->text(1) , -1 );
+		  else new_cb(0,0);
 		  for(int i = 0; i < 9; i++) menuitems[rec_pr_menu_index+i].activate();
 		  add_recent_project_to_menu(newfile);
 		  menubar->copy(menuitems, window);
@@ -1924,14 +1994,33 @@ void add_recent_file_to_menu(char *filename)
 
 void set_text_size(int t)
 {
+//Fl_Color hl_plain, hl_linecomment, hl_blockcomment, hl_string, hl_directive, hl_type, hl_keyword, hl_character¸background_color;
 			styletable[0].size = t;
-			styletable[1].size = t;
+			styletable[0].color = hl_plain;
+			
+			styletable[1].size = t;			
+			styletable[1].color = hl_linecomment;
+			
 			styletable[2].size = t;
+			styletable[2].color = hl_blockcomment;
+						
 			styletable[3].size = t;
+			styletable[3].color = hl_string;
+			
 			styletable[4].size = t;
+			styletable[4].color = hl_directive;
+			
 			styletable[5].size = t;
+			styletable[5].color = hl_type;
+			
 			styletable[6].size = t;
+			styletable[6].color = hl_keyword;
+			
 			styletable[7].size = t;
+			styletable[7].color = hl_character;
+			
+			te->color(background_color);
+			te->mCursor_color = hl_plain;
 		  
 			op_styletable[0].size = t;
 			op_styletable[1].size = t;
@@ -1949,7 +2038,7 @@ class SmartButton : public Fl_Button
 {
 	public:
 		SmartButton(int x, int y, int w, int h) : Fl_Button(x,y,w,h) { 
-			box(FL_FLAT_BOX); 
+			box(FL_NO_BOX); 
 			down_box(FL_DOWN_BOX); 
 			
 		}
@@ -2149,6 +2238,10 @@ Fl_Window* make_form() {
 			      'A', style_unfinished_cb, 0);
     w->editor->textfont(FL_COURIER);
     w->editor->end();
+    
+	te->color(background_color);
+	te->mCursor_color = hl_plain;
+	
     w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,384,615,16,"Zeile 1"); 
 
     w->outputwindowbutton = new Fl_Button(620,384,40,16,"Output");
@@ -2156,7 +2249,7 @@ Fl_Window* make_form() {
     w->outputwindowbutton->visible_focus(0);
     w->outputwindowbutton->labelsize(10);
 
-    w->output = new My_Text_Editor(0,285,660,99);
+    w->output = new My_Text_Editor2(0,285,660,99);
 	w->output->highlight_data(op_stylebuf, op_styletable,
                               sizeof(op_styletable) / sizeof(op_styletable[0]),
 			      'A', style_unfinished_cb, 0);
@@ -2224,7 +2317,8 @@ int main(int argc, char **argv) {
   op_stylebuf = new Fl_Text_Buffer();
   window = (EditorWindow*)make_form();
   window->icon((char *)p);
-  window->show(argc,argv);
+  window->show(1,argv);
+  //window->show();
   
   //Set Icon Mask for transparent Icon
   XWMHints *hints = XGetWMHints(fl_display, fl_xid(window));

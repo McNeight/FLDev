@@ -33,7 +33,6 @@
 #include <iostream>
 #include <stdio.h>
 
-
 string trim(string const& source, char const* delims) {
   std::string result(source);
   std::string::size_type index = result.find_last_not_of(delims);
@@ -223,7 +222,7 @@ int Project::load() {
 }
 
 
-static void kill_selection(Fl_Text_Editor* e) {
+static void kill_selection(My_Text_Editor* e) {
   if (e->buffer()->selected()) {
     e->insert_position(e->buffer()->primary_selection()->start());
     e->buffer()->remove_selection();
@@ -241,7 +240,7 @@ int Fl_Text_Editor_ext::handle(int event) {
   }
   
 
-  return Fl_Text_Editor::handle(event);
+  return My_Text_Editor::handle(event);
 }
 
 

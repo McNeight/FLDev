@@ -11,8 +11,8 @@ decl {bool pr_wiz_ok;} {public
 Function {make_proj_wizard()} {open
 } {
   Fl_Window proj_wiz {
-    label {New Project} open selected
-    xywh {157 168 500 210} type Double modal visible
+    label {New Project} open
+    xywh {474 187 503 248} type Double modal visible
   } {
     Fl_Input pr_dir_input {
       label {Project Directory:}
@@ -31,12 +31,12 @@ Function {make_proj_wizard()} {open
       label OK
       callback {pr_wiz_ok=true;
 proj_wiz->hide();}
-      xywh {320 170 80 25}
+      xywh {320 205 80 25}
     }
     Fl_Button pr_wiz_cancel_btn {
       label Cancel
       callback {proj_wiz->hide();}
-      xywh {410 170 80 25}
+      xywh {410 205 80 25}
     }
     Fl_Group {} {
       label {Type:} open
@@ -51,6 +51,10 @@ proj_wiz->hide();}
         xywh {155 100 110 25} type Radio down_box ROUND_DOWN_BOX
         code0 {con_app->value(1);}
       }
+    }
+    Fl_Check_Button main_cpp_chk {
+      label {Generate 'main.cpp'} selected
+      xywh {130 165 155 25} down_box DOWN_BOX
     }
   }
 } 

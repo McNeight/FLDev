@@ -34,6 +34,7 @@
 
 #include <string>
 #include <deque>
+#include "My_Text_Editor.h"
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_File_Browser.H>
 #include <FL/Fl_Hold_Browser.H>
@@ -111,12 +112,12 @@ class Project {
 };
 
 
-class Fl_Text_Editor_ext : public Fl_Text_Editor {
+class Fl_Text_Editor_ext : public My_Text_Editor {
   public:
-	Fl_Text_Editor_ext(int x, int y, int w, int h):Fl_Text_Editor(x,y,w,h) {}
+	Fl_Text_Editor_ext(int x, int y, int w, int h):My_Text_Editor(x,y,w,h) {}
 	int handle_key_ext();
 	int handle(int event);
-
+	//Fl_Color mCursor_color;
 	bool smart_indent;
 };
 

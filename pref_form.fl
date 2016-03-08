@@ -2,7 +2,37 @@
 version 1.0104 
 header_name {.h} 
 code_name {.cpp}
+decl {\#include <FL/fl_show_colormap.H>} {public
+} 
+
 decl {int text_size;} {public
+} 
+
+decl {extern Fl_Color hl_plain;} {public
+} 
+
+decl {extern Fl_Color hl_linecomment;} {public
+} 
+
+decl {extern Fl_Color hl_blockcomment;} {public
+} 
+
+decl {extern Fl_Color hl_string;} {public
+} 
+
+decl {extern Fl_Color hl_directive;} {public
+} 
+
+decl {extern Fl_Color hl_type;} {public
+} 
+
+decl {extern Fl_Color hl_keyword;} {public
+} 
+
+decl {extern Fl_Color hl_character;} {public
+} 
+
+decl {extern Fl_Color background_color;} {public
 } 
 
 decl {int save_window_size;} {public
@@ -14,8 +44,8 @@ decl {int auto_hide;} {public
 Function {make_pref_form()} {open
 } {
   Fl_Window pref_window {
-    label Preferences open selected
-    xywh {374 202 525 330} type Double align 5 modal visible
+    label Preferences open
+    xywh {350 207 525 330} type Double align 5 modal visible
   } {
     Fl_Box {} {
       xywh {10 15 505 270} box ENGRAVED_BOX
@@ -25,7 +55,16 @@ Function {make_pref_form()} {open
       callback {text_size = text_size_choice->value() * 2 + 6;
 save_window_size = save_wsoe_check->value();
 auto_hide = hide_output_check->value();
-pref_window->hide();}
+hl_plain = plain_btn->color();
+hl_linecomment = line_btn->color();
+hl_blockcomment = block_btn->color();
+hl_string = string_btn->color();
+hl_directive = directive_btn->color();
+hl_type = type_btn->color();
+hl_keyword = keyword_btn->color();
+hl_character = character_btn->color();
+background_color = bg_btn->color();
+pref_window->hide();} selected
       xywh {345 295 85 25}
     }
     Fl_Button pref_cancel_btn {
@@ -35,25 +74,74 @@ pref_window->hide();}
     }
     Fl_Choice text_size_choice {
       label {Text Size} open
-      xywh {95 35 60 25} down_box BORDER_BOX
+      xywh {95 30 60 25} down_box BORDER_BOX
       code0 {text_size_choice->add("6");text_size_choice->add("8");text_size_choice->add("10");text_size_choice->add("12");text_size_choice->add("14");text_size_choice->add("16");text_size_choice->add("18");text_size_choice->add("20");}
       code1 {text_size_choice->value(3);}
     } {}
     Fl_Check_Button smart_indent_check {
       label {Use Smart-Indent Option}
-      xywh {30 65 180 25} down_box DOWN_BOX
+      xywh {30 95 180 25} down_box DOWN_BOX
     }
     Fl_Check_Button save_wsoe_check {
       label {Save Window Size On Exit}
-      xywh {30 90 195 25} down_box DOWN_BOX
+      xywh {30 120 195 25} down_box DOWN_BOX
     }
     Fl_Check_Button hide_output_check {
       label {Auto-hide Output Window}
-      xywh {30 115 195 25} down_box DOWN_BOX
+      xywh {30 145 195 25} down_box DOWN_BOX
     }
     Fl_Check_Button rec_pr_check {
       label {Open previous project on startup}
-      xywh {30 140 235 25} down_box DOWN_BOX
+      xywh {30 170 235 25} down_box DOWN_BOX
+    }
+    Fl_Box {} {
+      label {Highlight Colors}
+      xywh {275 25 230 250} box ENGRAVED_BOX labeltype ENGRAVED_LABEL align 21
+    }
+    Fl_Button plain_btn {
+      label {Plain Text}
+      callback {plain_btn->color(fl_show_colormap(plain_btn->color()));}
+      xywh {305 60 15 15} align 8
+    }
+    Fl_Button line_btn {
+      label {Line Comments}
+      callback {line_btn->color(fl_show_colormap(line_btn->color()));}
+      xywh {305 80 15 15} align 8
+    }
+    Fl_Button block_btn {
+      label {Block Comments}
+      callback {block_btn->color(fl_show_colormap(block_btn->color()));}
+      xywh {305 100 15 15} align 8
+    }
+    Fl_Button string_btn {
+      label Strings
+      callback {string_btn->color(fl_show_colormap(string_btn->color()));}
+      xywh {305 120 15 15} align 8
+    }
+    Fl_Button directive_btn {
+      label Directives
+      callback {directive_btn->color(fl_show_colormap(directive_btn->color()));}
+      xywh {305 140 15 15} align 8
+    }
+    Fl_Button type_btn {
+      label Types
+      callback {type_btn->color(fl_show_colormap(type_btn->color()));}
+      xywh {305 160 15 15} align 8
+    }
+    Fl_Button keyword_btn {
+      label Keywords
+      callback {keyword_btn->color(fl_show_colormap(keyword_btn->color()));}
+      xywh {305 180 15 15} align 8
+    }
+    Fl_Button character_btn {
+      label Characters
+      callback {character_btn->color(fl_show_colormap(character_btn->color()));}
+      xywh {305 200 15 15} align 8
+    }
+    Fl_Button bg_btn {
+      label Background
+      callback {bg_btn->color(fl_show_colormap(bg_btn->color()));}
+      xywh {305 240 15 15} align 8
     }
   }
 } 
