@@ -299,7 +299,7 @@ int Fl_Text_Editor_ext::handle(int event) {
   }
   
 
-  return My_Text_Editor::handle(event);
+  return Fl_Text_Editor::handle(event);
 }
 
 
@@ -311,7 +311,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
   int del;
   if (Fl::compose(del)) {
     if (del) buffer()->select(insert_position()-del, insert_position());
-    kill_selection(this);
+//    kill_selection(this);
     if (Fl::event_length()) {
       if (insert_mode()) {
 			insert(Fl::event_text());
@@ -385,7 +385,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 
 void Fl_Text_Editor_ext::get_line_nrs(int *first_line, int *last_line)
 {
-	*first_line = get_absolute_top_line_number();
+	*first_line = mTopLineNum; //get_absolute_top_line_number();
 	*last_line = *first_line + mNVisibleLines ;//textD->nVisibleLines;	
 }
 

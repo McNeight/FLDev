@@ -1,0 +1,13 @@
+hello
+hello
+.
+.
+
+-L/usr/local/lib
+-I/usr/include
+
+
+1
+main.cpp
+
+

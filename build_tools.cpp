@@ -114,7 +114,11 @@ void generate_makefile_cb()
 
 	if(ptr != NULL) 
 	{
+#if MSDOS
+		fprintf(ptr,"# Standard defines:\n\nCC\t=\tgpp\nLD\t=\tgpp\nCCOMP\t=\tgcc\n");
+#else           
 		fprintf(ptr,"# Standard defines:\n\nCC\t=\tg++\nLD\t=\tg++\nCCOMP\t=\tgcc\n");
+#endif
 		fprintf(ptr,"oDir\t=\t%s\n",	project.oDir.c_str());
 		fprintf(ptr,"Bin\t=\t%s\n",		project.Bin.c_str());
 		fprintf(ptr,"libDirs\t=\t%s\n",		project.libdirs.c_str());

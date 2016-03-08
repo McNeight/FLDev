@@ -53,14 +53,15 @@ Fl_Double_Window* make_proj_wizard() {
       o->box(FL_THIN_UP_BOX);
       o->labeltype(FL_EMBOSSED_LABEL);
       o->align(FL_ALIGN_TOP_LEFT|FL_ALIGN_INSIDE);
-      { Fl_Round_Button* o = x_app = new Fl_Round_Button(180, 135, 85, 20, "X11 App");
+      { Fl_Round_Button* o = x_app = new Fl_Round_Button(180, 135, 85, 20, " X11 - FLTK App");
         o->type(102);
         o->down_box(FL_ROUND_DOWN_BOX);
+        x_app->value(1);
       }
-      { Fl_Round_Button* o = con_app = new Fl_Round_Button(180, 110, 110, 25, "Console App");
+      { Fl_Round_Button* o = con_app = new Fl_Round_Button(180, 110, 110, 25, " Console App");
         o->type(102);
         o->down_box(FL_ROUND_DOWN_BOX);
-        con_app->value(1);
+        //con_app->value(1);
       }
       o->end();
     }

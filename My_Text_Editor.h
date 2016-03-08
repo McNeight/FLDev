@@ -30,74 +30,12 @@
 #define My_Text_Editor_H
 
 #include "My_Text_Display.h"
+#include <FL/Fl_Text_Editor.H>
 
 // key will match in any state
 #define My_Text_Editor_ANY_STATE  (-1L)
 
-class FL_EXPORT My_Text_Editor : public My_Text_Display {
-  public:
-    typedef int (*Key_Func)(int key, My_Text_Editor* editor);
-
-    struct Key_Binding {
-      int          key;
-      int          state;
-      Key_Func     function;
-      Key_Binding* next;
-    };
-
-    My_Text_Editor(int X, int Y, int W, int H, const char* l = 0);
-    ~My_Text_Editor() { remove_all_key_bindings(); }
-    virtual int handle(int e);
-    void insert_mode(int b) { insert_mode_ = b; }
-    int insert_mode() { return insert_mode_; }
-
-    void add_key_binding(int key, int state, Key_Func f, Key_Binding** list);
-    void add_key_binding(int key, int state, Key_Func f)
-      { add_key_binding(key, state, f, &key_bindings); }
-    void remove_key_binding(int key, int state, Key_Binding** list);
-    void remove_key_binding(int key, int state)
-      { remove_key_binding(key, state, &key_bindings); }
-    void remove_all_key_bindings(Key_Binding** list);
-    void remove_all_key_bindings() { remove_all_key_bindings(&key_bindings); }
-    void add_default_key_bindings(Key_Binding** list);
-    Key_Func bound_key_function(int key, int state, Key_Binding* list);
-    Key_Func bound_key_function(int key, int state)
-      { return bound_key_function(key, state, key_bindings); }
-    void default_key_function(Key_Func f) { default_key_function_ = f; }
-
-    // functions for the built in default bindings
-    static int kf_default(int c, My_Text_Editor* e);
-    static int kf_ignore(int c, My_Text_Editor* e);
-    static int kf_backspace(int c, My_Text_Editor* e);
-    static int kf_enter(int c, My_Text_Editor* e);
-    static int kf_move(int c, My_Text_Editor* e);
-    static int kf_shift_move(int c, My_Text_Editor* e);
-    static int kf_ctrl_move(int c, My_Text_Editor* e);
-    static int kf_c_s_move(int c, My_Text_Editor* e);
-    static int kf_home(int, My_Text_Editor* e);
-    static int kf_end(int c, My_Text_Editor* e);
-    static int kf_left(int c, My_Text_Editor* e);
-    static int kf_up(int c, My_Text_Editor* e);
-    static int kf_right(int c, My_Text_Editor* e);
-    static int kf_down(int c, My_Text_Editor* e);
-    static int kf_page_up(int c, My_Text_Editor* e);
-    static int kf_page_down(int c, My_Text_Editor* e);
-    static int kf_insert(int c, My_Text_Editor* e);
-    static int kf_delete(int c, My_Text_Editor* e);
-    static int kf_copy(int c, My_Text_Editor* e);
-    static int kf_cut(int c, My_Text_Editor* e);
-    static int kf_paste(int c, My_Text_Editor* e);
-    static int kf_select_all(int c, My_Text_Editor* e);
-    static int kf_undo(int c, My_Text_Editor* e);
-
-  protected:
-    int handle_key();
-    void maybe_do_callback();
-
-    int insert_mode_;
-    Key_Binding* key_bindings;
-    static Key_Binding* global_key_bindings;
-    Key_Func default_key_function_;
+class FL_EXPORT My_Text_Editor : public Fl_Text_Editor {
 };
 
 #endif

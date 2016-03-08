@@ -2,12 +2,12 @@ FLDev
 fldev
 .
 .
--lX11 -lXpm -lfltk_images -lm -lfltk_forms -lfltk -lpng -lz -ljpeg -lutil
--L/usr/X11R6/lib
--I/usr/X11R6/include
+-lX11 -lXext -lXft -lXinerama -lfltk_images -lm -lfltk_forms -lfltk -lpng -lz -ljpeg -lutil
+-L/usr/local/lib
+-I/usr/include
 
--Os
-1
+-Os -Wno-write-strings
+0
 editor.cpp highlight.cpp extras.cpp build_tools.cpp My_Text_Display.cpp My_Text_Editor.cpp NavBrowser.cpp My_File_Browser.cpp debug.cpp
 extras.h globals.h EditorWindow.h highlight.h build_tools.h icon_pixmaps.h My_Text_Display.h My_Text_Editor.h NavBrowser.h My_File_Browser.h debug.h
 proj_form.fl pref_form.fl proj_wiz_form.fl

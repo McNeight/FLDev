@@ -16,7 +16,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include <stdlib.h>
 #include <pty.h>
-#include <FL/Fl.h>
+#include <FL/Fl.H>
 #include <iostream>
 #include <signal.h>
 #include "extras.h"

@@ -451,7 +451,7 @@ style_update(	int        pos,		// I - Position of update
     free(style);
   } else {
     // Just delete characters in the style buffer...
-    if((stylebuf->character(pos) == 'D') || (stylebuf->character(pos) == 'C')) stringdeleted = 1;
+//    if((stylebuf->character(pos) == 'D') || (stylebuf->character(pos) == 'C')) stringdeleted = 1;
     
     stylebuf->remove(pos, pos + nDeleted);
     if(pos < 2) style_init();
