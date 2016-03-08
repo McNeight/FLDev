@@ -29,7 +29,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-#include "extras.h" 
+#include "extras.h"
 #include <iostream>
 #include <stdio.h>
 
@@ -50,7 +50,34 @@ string trim(string const& source, char const* delims) {
   return result;
 }
 
+#ifdef _WIN32
+char *strsep(char **from, const char *delim) {
+    char *s, *dp, *ret;
 
+    if ((s = *from) == NULL)
+        return NULL;
+
+    ret = s;
+    while (*s != '\0') {
+        /* loop until the end of s, checking against each delimiting character,
+         * if we find a delimiter set **s to '\0' and return our previous token
+         * to the user. */
+        dp = (char *)delim;
+        while (*dp != '\0') {
+            if (*s == *dp) {
+                *s = '\0';
+                *from = s + 1;
+                return ret;
+            }
+            dp++;
+        }
+        s++;
+    }
+    /* end of string case */
+    *from = NULL;
+    return ret;
+}
+#endif
 
 //redefine Group and tile to remove keyboard navigation
 int My_Group_wo_Nav::handle(int event) {
@@ -191,14 +218,16 @@ void Project::save() {
 	int BUFSIZE=255;
 #if MSDOS
 	sprintf(buf,"%s.fld",name.c_str());
+#elif _WIN32
+	sprintf(buf,"%s\\%s.fldev",pr_dir.c_str(),name.c_str());
 #else	
-	sprintf(buf,"%s.fldev",name.c_str());
+	sprintf(buf,"%s/%s.fldev",pr_dir.c_str(),name.c_str());
 #endif
 	FILE *ptr = fopen(buf,"w");
 	run_in_console = console_check->value();
 	if(ptr != NULL) 
 	{
-		fprintf(ptr,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%s\n", 
+		fprintf(ptr,"%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%s\n%s\n%s\n%s\n%s\n%d\n", 
 					name.c_str(),
 					binfilename.c_str(),
 					oDir.c_str(),
@@ -211,7 +240,10 @@ void Project::save() {
 					run_in_console,
 					src_files.c_str(),
 					header_files.c_str(),
-					gui_files.c_str()
+					gui_files.c_str(),
+					pr_dir.c_str(),
+					own_makefile.c_str(),
+					use_own_makefile
 				);
 		fclose(ptr);
 		modified=false;
@@ -221,10 +253,12 @@ void Project::save() {
 int Project::load() {
 	char buf[255];
 	int BUFSIZE=255;
+	
 	sprintf(buf,"%s",pr_filename.c_str());
+	
 	FILE *ptr = fopen(buf,"r");
 
-	char aname[255], abinf[255], aodir[255], abin[255], alibs[255], alibd[255], ainc[255], ald[255], ac[255], asrc[255], ahdr[255], agui[255], acons[255];
+	char aname[255], abinf[255], aodir[255], abin[255], alibs[255], alibd[255], ainc[255], ald[255], ac[255], asrc[255], ahdr[255], agui[255], acons[255], aprdir[255], amake[255], amake_chk[255];
 	if(ptr != NULL) 
 	{
 		fgets(aname,255,ptr);
@@ -240,7 +274,9 @@ int Project::load() {
 		fgets(asrc,255,ptr);
 		fgets(ahdr,255,ptr);		
 		char *guil = fgets(agui,255,ptr);
-
+		fgets(aprdir,255,ptr);
+		fgets(amake,255,ptr);
+		fgets(amake_chk,255,ptr);
 					
 		name = trim(aname);
 		binfilename = trim(abinf);
@@ -255,10 +291,14 @@ int Project::load() {
 		header_files = trim(ahdr);		
 		if(guil) gui_files = trim(agui);
 		else gui_files = "";
+		pr_dir = trim(aprdir);
 		sscanf(acons,"%d",&run_in_console);
+		own_makefile = trim(amake);
+		sscanf(amake_chk,"%d",&use_own_makefile);
 					
 		pname->value(name.c_str());
 		ptarg->value(binfilename.c_str());
+		ppr_dir->value(pr_dir.c_str());
 		psrc->value(src_files.c_str());
 		phdr->value(header_files.c_str());
 		pgui->value(gui_files.c_str());
@@ -270,6 +310,8 @@ int Project::load() {
 		pldflags->value(ldflags.c_str());
 		pcflags->value(cflags.c_str());
 		console_check->value(run_in_console);
+		pr_own_makefile->value(own_makefile.c_str());
+		own_make_chk->value(use_own_makefile);
 
 		fclose(ptr);
 		assigned = true;
@@ -341,7 +383,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
   
   
   if(Fl::event_key()==FL_Enter && smart_indent) {
-	char *line = "";
+	char *line = '\0';
 	line = strdup(buffer()->line_text(insert_position()));
 	for(int i = 0; i < strlen(line); i++) {
 		if(line[i]!=' ' && line[i]!='\t') line[i]='\0';
@@ -364,7 +406,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 
   else if(Fl::event_key()==FL_Home) {
 	int pos;
-	char *line = "";
+	char *line = '\0';
 	
 	line = strdup(buffer()->line_text(insert_position()));
 	for(int i = 0; i < strlen(line); i++) {

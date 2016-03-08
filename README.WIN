@@ -1,0 +1,29 @@
+
+Additions to the manual for the Windows version
+-----------------------------------------------
+
+Please do not install this in "Program files" since MinGW
+does not like blanks in path names. This also applies to
+project directory paths you may choose.
+
+This version includes a minimal set of MinGW32 which allowed
+to compile console and FLTK programs fine so far.
+There will be an extension package on the sourceforge site.
+
+Only C++ is included and you have to compile your C programs
+with C++. This will report more warnings than just C but work
+ok.
+
+The Windows version supports several project directories where
+the source files can be stored. FlDev will put into these the
+Makefile it generates and the project file (".fldev").
+
+If you select Debug from the menu FlDev will compile the program
+again with the -g flag to allow the gdb debugger to display the
+source lines of the program.
+
+If you uninstall the program, directories will not be deleted and
+also not the files you generated, e.g. *.o and *.exe files. Just
+delete the fldev130 directory with Explorer then.
+
+2nd of April 2014 Georg Potthast

@@ -22,7 +22,7 @@
 
 
 
-static char * fldevicon_xpm[] = {
+const char * fldevicon_xpm[] = {
 "32 32 8 1",
 ": 	c none",
 ".	c #008000",
@@ -67,7 +67,7 @@ static char * fldevicon_xpm[] = {
 
 
 
-static char * term_xpm[] = {
+const char * term_xpm[] = {
 "16 16 111 2",
 "  	c None",
 ". 	c #000000",
@@ -200,7 +200,7 @@ static char * term_xpm[] = {
 static Fl_Pixmap image_term(term_xpm);
 
 
-static char * compile_run_xpm[] = {
+const char * compile_run_xpm[] = {
 "16 16 61 1",
 " 	c None",
 ".	c #000000",
@@ -284,7 +284,7 @@ static Fl_Pixmap image_compile_run(compile_run_xpm);
 
 
 
-static char * stock_undo_xpm[] = {
+const char * stock_undo_xpm[] = {
 "16 16 35 1",
 " 	c None",
 ".	c #000000",
@@ -339,7 +339,7 @@ static char * stock_undo_xpm[] = {
 "          ..    "};
 static Fl_Pixmap image_undo(stock_undo_xpm);
 
-static char * run_xpm[] = {
+const char * run_xpm[] = {
 "16 16 25 1",
 " 	c None",
 ".	c #030C01",
@@ -385,7 +385,7 @@ static char * run_xpm[] = {
 
 static Fl_Pixmap image_run(run_xpm);
 /*
-static char * fluid_xpm[] = {
+const char * fluid_xpm[] = {
 "16 16 9 1",
 " 	c #000000",
 ".	c #A8A8A8",
@@ -414,7 +414,7 @@ static char * fluid_xpm[] = {
 "*$+++++++++++++$"};
 
 */
-static char * fluid_xpm[] = {
+const char * fluid_xpm[] = {
 "16 16 6 1",
 "       c None",
 ".      c #D0D0D0",
@@ -441,7 +441,7 @@ static char * fluid_xpm[] = {
 
 static Fl_Pixmap image_fluid(fluid_xpm);
 
-static char * browser_xpm[] = {
+const char * browser_xpm[] = {
 "16 16 26 1",
 " 	c #000000",
 ".	c #747474",
@@ -491,7 +491,7 @@ static Fl_Pixmap image_browser(browser_xpm);
 
 
 
-static char * stock_paste_xpm[] = {
+const char * stock_paste_xpm[] = {
 "16 16 54 1",
 " 	c None",
 ".	c #000000",
@@ -567,7 +567,7 @@ static char * stock_paste_xpm[] = {
 static Fl_Pixmap image_paste(stock_paste_xpm);
 
 
-static char * stock_cut_xpm[] = {
+const char * stock_cut_xpm[] = {
 "16 16 23 1",
 " 	c None",
 ".	c #000000",
@@ -614,7 +614,7 @@ static Fl_Pixmap image_cut(stock_cut_xpm);
 
 
 
-static char * stock_copy_xpm[] = {
+const char * stock_copy_xpm[] = {
 "16 16 18 1",
 " 	c None",
 ".	c #000000",
@@ -655,7 +655,7 @@ static Fl_Pixmap image_copy(stock_copy_xpm);
 
 
 
-static char * stock_search_xpm[] = {
+const char * stock_search_xpm[] = {
 "16 16 61 1",
 " 	c None",
 ".	c #000000",
@@ -740,7 +740,7 @@ static Fl_Pixmap image_search(stock_search_xpm);
 
 
 
-static char * stock_search_and_replace_xpm[] = {
+const char * stock_search_and_replace_xpm[] = {
 "16 16 107 2",
 "  	c None",
 ". 	c #000000",
@@ -871,7 +871,7 @@ static Fl_Pixmap image_search_and_replace(stock_search_and_replace_xpm);
 
 
 
-static char * stock_compile_xpm[] = {
+const char * stock_compile_xpm[] = {
 "16 16 55 1",
 " 	c None",
 ".	c #000000",

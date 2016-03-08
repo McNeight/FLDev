@@ -150,6 +150,11 @@ class Project {
 	string pr_filename;
 	string name;
 	string pr_dir;
+	string own_makefile;
+
+	int run_in_console;
+	int use_own_makefile;
+	
 	string binfilename;
 	string src_files;
 	string header_files;
@@ -165,15 +170,15 @@ class Project {
 	string srcs;
 	deque<string> exobjs;
 	string cflags;
+	string gdbflags;
 
 	bool modified;
-
-	int run_in_console;
 
 	Project() {
 		oDir = ".";
 		Bin = ".";
-		string cflags = "-O";
+		string cflags = "-O2";
+		string gdbflags ="-s";
 		assigned = false;
 		modified = false;
 	}

@@ -16,6 +16,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #ifndef EDITORWINDOW_H
 #define EDITORWINDOW_H
 
+#ifdef _WIN32
+extern char *strsep(char **, const char *);
+#endif
 
 //output for make, could be replaced by Fl_Browser in the future
 class My_Text_Editor2 : public Fl_Text_Editor {

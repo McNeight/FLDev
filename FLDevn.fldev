@@ -1,0 +1,16 @@
+FLDevn
+fldevn
+C:/fldev130
+C:/fldev130
+icon_win32/icores.o -static-libgcc -static-libstdc++ -lfltk_images -lfltk_forms -lfltk_png -lfltk_z -lfltk_jpeg -lfltk -lm -mwindows -lole32 -luuid -lcomctl32 -lwsock32
+-LC:/fldev130/lib
+-IC:/fldev130/include
+
+-O2
+0
+editor.cpp highlight.cpp extras.cpp build_tools.cpp My_Text_Display.cpp My_Text_Editor.cpp NavBrowser.cpp My_File_Browser.cpp debug.cpp
+extras.h globals.h EditorWindow.h highlight.h build_tools.h icon_pixmaps.h My_Text_Display.h My_Text_Editor.h NavBrowser.h My_File_Browser.h debug.h
+proj_form.fl pref_form.fl proj_wiz_form.fl
+C:/fldev130
+
+0

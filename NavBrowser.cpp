@@ -317,7 +317,8 @@ int subs[255];
 
 
 void NavBrowser::clearsubs() {
-  	bzero(subs,255*sizeof(int));
+	memset (subs, '\0', 255*sizeof(int));
+  //	bzero(subs,255*sizeof(int));
 }
 
 void NavBrowser::item_draw(void* v, int X, int Y, int W, int H) const {

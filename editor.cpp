@@ -6,6 +6,8 @@
 */
 #if MSDOS
 #define VERSION 	"130_DOS-1.5.8"
+#elif _WIN32
+#define VERSION 	"130_WIN32-1.5.8"
 #else
 #define VERSION 	"130_x11-1.5.8"
 #endif
@@ -51,14 +53,16 @@
 #include <errno.h>
 #include <iostream>
 #include <deque>
-#include <X11/xpm.h>
+#ifndef _WIN32
+  #include <X11/xpm.h>
+#endif
 #include "icon_pixmaps.h"
-
+#include "globals.h"
 #ifdef __MWERKS__ 
 #define FL_DLL
 #endif
 
-#if MSDOS
+#ifdef MSDOS
 #include <sys/exceptn.h>
 #include <crt0.h>
 int _crt0_startup_flags = _CRT0_FLAG_NULLOK | _CRT0_FLAG_FILL_SBRK_MEMORY; //disable null pointer protection
@@ -90,11 +94,11 @@ FOR_NANOLINUX
 using namespace std;
 
 
-int				rec_pr_menu_index = 49;
-int                bufchanged = 0;
-char               filename[256] = "";
-char               filename_wo_path[256] = "";
-char               title[256], usrdocdir[256];  
+int	rec_pr_menu_index = 49;
+int bufchanged = 0;
+char filename[256] = "";
+char filename_wo_path[256] = "";
+char title[256], usrdocdir[256];  
 bool hidden = true, cppfile, filelistopen=false, make_error = false;
 bool exec_running = false, nav_expand = false, show_line_nrs = false;
 int linecount, update_count;
@@ -105,7 +109,7 @@ int show_nav = 0;
 int line_nr_size = 50;
 
 
-Fl_Text_Buffer     *outputtb = 0;
+Fl_Text_Buffer *outputtb = 0;
 Project project;
 File_History *file_hist;
 Fl_Menu_Bar* menubar;
@@ -224,13 +228,119 @@ void replace2_cb(Fl_Widget*, void*);
 void replcan_cb(Fl_Widget*, void*);
 void generate_makefile_cb();
 void run_cb(Fl_Widget*, void*);
-
+void make_(Fl_Widget* w, void* v, int mode=0);
 
 deque <Nav_entry> funs;
 deque <Nav_entry> classes;
 deque <Nav_entry> structs;
 deque <Nav_entry> enums;
 deque <Nav_entry> unions;
+
+
+/*
+ * Mechanism to handle determining *where* the exe actually lives
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+/********************************************************************************************/
+#ifdef WIN32
+#include <windows.h> /* GetModuleFileName */
+#endif /* WIN32 */
+
+#ifndef PATH_MAX
+#  define PATH_MAX 2048
+#endif
+
+//http://msdn.microsoft.com/en-us/library/ms682512.aspx - Creating processes
+void wprocess( char* cmdstring, int nowin)
+{
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+
+    ZeroMemory( &si, sizeof(si) );
+    si.cb = sizeof(si);
+    ZeroMemory( &pi, sizeof(pi) );
+
+    // Start the child process. 
+    int proc_creation_flags=0;
+    if (nowin==1) proc_creation_flags=CREATE_NO_WINDOW; // No console window
+    if( !CreateProcess( NULL,   // No module name (use command line)
+        cmdstring,        // Command line
+        NULL,           // Process handle not inheritable
+        NULL,           // Thread handle not inheritable
+        FALSE,          // Set handle inheritance to FALSE
+        proc_creation_flags, // creation flags	
+        NULL,           // Use parent's environment block
+        NULL,           // Use parent's starting directory 
+        &si,            // Pointer to STARTUPINFO structure
+        &pi )           // Pointer to PROCESS_INFORMATION structure
+    ) 
+    {
+        printf( "CreateProcess failed (%d).\n", GetLastError() );
+        return;
+    }
+
+    // Wait until child process exits.
+    WaitForSingleObject( pi.hProcess, INFINITE );
+
+    // Close process and thread handles. 
+    CloseHandle( pi.hProcess );
+    CloseHandle( pi.hThread );
+}
+
+
+
+
+
+
+int get_app_path (char *pname, size_t pathsize)
+{
+        long result;
+
+#ifdef WIN32
+        result = GetModuleFileName(NULL, pname, pathsize);
+        if (result > 0)
+        {
+                /* fix up the dir slashes... */
+                int len = strlen(pname);
+                int idx;
+                for (idx = 0; idx < len; idx++)
+                {
+                        if (pname[idx] == '\\') pname[idx] = '/';
+                }
+                //slash = strrchr(path, '/');               
+		        //*slash = '\0';
+
+                //remove tailing slash if present
+		        if (pname[len-1] == '/') pname[len-1] = '\0';
+		        //remove filename
+		        char* slash = strrchr(pname, '/');
+		        *slash = '\0';
+                //if ((access(pname, 0) == 0))
+                        return 0; /* file exists, return OK */
+                /*else name doesn't seem to exist, return FAIL (falls through) */
+        }
+#endif /* WIN32 */
+
+        return -1; /* Path Lookup Failed */
+
+} /* where_do_I_live */
+
+/* Example:
+int main()
+{
+        char pname[PATH_MAX];
+        int err = get_app_path(pname, PATH_MAX);
+        
+        if (err) puts("Name lookup failed!");
+        else printf("Got: %s\n", pname);
+        return 0;
+}
+*/
+/********************************************************************************************/
 
 
 void navigator_update(char *text, char *style, int length) {
@@ -714,30 +824,45 @@ void nav_name_cb(Fl_Widget *w, void *v) {
 
 void debug_cb(Fl_Widget *w, void *v) {
 
-#if MSDOS
+//first compile with -g flag
+project.gdbflags = "-g";
+generate_makefile_cb();
+make_(w,v,1); //make clean
+make_(w,v,0);
+project.gdbflags = "-s";
+generate_makefile_cb();
+
+#if defined(MSDOS ) || defined(_WIN32)
    string command;
-   //command = "runindos.bat gdb "+project.binfilename+".exe";
-   command = "gdb -q "+project.binfilename+".exe";
-   toggle_text_mode();
+   //command = "runincmd.bat gdb "+project.binfilename+".exe";
+   command = "gdb -q "+project.pr_dir+"/"+project.binfilename+".exe";
    char *CurrWorkingDir = (char *)malloc(512);
-   getcwd(CurrWorkingDir,512);
+   #ifdef MSDOS
+      toggle_text_mode();
+      getcwd(CurrWorkingDir,512);
+   #else //WIN32
+      //int err = get_app_path(CurrWorkingDir, PATH_MAX);
+      getcwd(CurrWorkingDir,512);
+   #endif   
 
 //   printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
 //   printf("%s\n",command.c_str());      
    system((const char*)command.c_str());
 
-   chdir(CurrWorkingDir);
+   chdir(CurrWorkingDir); //back
    free(CurrWorkingDir);
-   toggle_text_mode();
+   #ifdef MSDOS   
+      toggle_text_mode();
+   #endif   
    return;
-#endif
+#endif //MSDOS - Win32
 
 #ifdef USE_NXLIB
 	fl_message("Not yet implemented");//problem with overlapping console and fltk windows.
     return;
 #endif
 
-run_cb(NULL,(void*)1); //run gdb
+run_cb(NULL,(void*)1); //run gdb if Linux X11
 
 #if WITHDEBUG
 	//gdb_start(project.binfilename);
@@ -1097,7 +1222,7 @@ int  load_file(char *newfile, int ipos) {
   if(strncmp(newfile + strlen(newfile) - 4,".cxx",4) == 0) cppfile = true;
   if(strncmp(newfile + strlen(newfile) - 4,".hxx",4) == 0) cppfile = true;
 
-#if MSDOS
+#ifdef MSDOS
   if((strncmp(newfile + strlen(newfile) - 4,".fld",4) == 0) || \
      (strncmp(newfile + strlen(newfile) - 6,".fldev",4) == 0) ) {
 #else
@@ -1106,6 +1231,7 @@ int  load_file(char *newfile, int ipos) {
 		project.pr_filename = newfile;
 		if(!project.load()) return 0;
 		project.addToBrowser(window->pr_browser);
+		window->file_browser->load(project.pr_dir.c_str());
 		add_recent_project_to_menu(newfile);
 		return 2;
 	}
@@ -1208,10 +1334,6 @@ void find_cb(Fl_Widget* w, void* v) {
 }
 
 
-
-
-
-
 void run_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
   string buf;
@@ -1223,34 +1345,49 @@ void run_cb(Fl_Widget* w, void* v) {
 		return;
   }
   exec_running = true;
-#if MSDOS
-  command = "runindos.bat "+project.binfilename+".exe";
-#else
-if (mode==1) {
-  command = "gdb -q " + project.Bin + "/" + project.binfilename;
-} else {
-  command = project.Bin + "/" + project.binfilename;
-}
+
+#if defined(MSDOS ) || defined(_WIN32)
+  command = "runincmd.bat "+project.binfilename+".exe";
+#else //define command for Linux
+  if (mode==1) {
+    command = "gdb -q " + project.Bin + "/" + project.binfilename;
+  } else {
+    command = project.Bin + "/" + project.binfilename;
+  }
 #endif
 
-  if(command == "") (strmsg[14].c_str());
+if(command == "") (strmsg[14].c_str());
 
-#if MSDOS
-   toggle_text_mode();
+#if defined(MSDOS ) || defined(_WIN32) //nested #ifs follow!
    char *CurrWorkingDir = (char *)malloc(512);
-   getcwd(CurrWorkingDir,512);
+  #ifdef MSDOS
+    toggle_text_mode();
+    getcwd(CurrWorkingDir,512);
+  #else //WIN32
+    int err = get_app_path(CurrWorkingDir, PATH_MAX);
+  #endif   
 
-//   printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
-//   printf("%s\n",command.c_str());      
+  #if MSDOS
    system((const char*)command.c_str());
-
+  #else //WIN32
+    if(console_check->value() || mode==1) {	//console or gdb mode
+       system((const char*)command.c_str());
+    } else {
+       command = project.binfilename+".exe";
+	   wprocess((char*)command.c_str(),0);
+	}
+  #endif
+  
    chdir(CurrWorkingDir);
    free(CurrWorkingDir);
-   toggle_text_mode();
-   exec_running = false;
-   return;
-#endif
+  #if MSDOS
+     toggle_text_mode();
+  #endif
+     exec_running = false;
+     return; //quit here for MSDOS or WIN32
+#endif //MSDOS + Win32
 
+//now for Linux - first run in console mode
   if(console_check->value() || mode==1) {	
 #ifdef USE_NXLIB
 	buf = "/usr/bin/deskapps/nxterm/nxterm " + command;
@@ -1262,8 +1399,9 @@ if (mode==1) {
 #endif
 	ptr = popen(buf.c_str(),"r");
 	pclose(ptr);
-  }
-  else {
+  
+  }  else { //if not in console mode
+  
   	buf = command+" > /dev/null 2>&1 &";
 	ptr = popen(buf.c_str(),"r");
 	pclose(ptr);
@@ -1275,8 +1413,22 @@ if (mode==1) {
 
 void xterm_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
+
+#ifdef _WIN32
+   char *CurrWorkingDir = (char *)malloc(512);
+   //int err = get_app_path(CurrWorkingDir, PATH_MAX);
+   getcwd(CurrWorkingDir,512);
+   chdir(project.pr_dir.c_str());
+   //printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
+   system("command.com");
+
+   chdir(CurrWorkingDir);
+   free(CurrWorkingDir);
+   return; //avoid pclose
+#endif
+
 #ifdef USE_NXLIB
-  #if MSDOS
+  #ifdef MSDOS
    toggle_text_mode();
    char *CurrWorkingDir = (char *)malloc(512);
    getcwd(CurrWorkingDir,512);
@@ -1300,8 +1452,16 @@ void xterm_cb(Fl_Widget* w, void* v) {
 
 void fluid_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
-#if MSDOS
+#ifdef MSDOS
   system("fluid");
+#elif _WIN32
+  char *projectdir;
+  char homedir[PATH_MAX];
+  int err = get_app_path(homedir, PATH_MAX);
+  projectdir = (char*)malloc((strlen(homedir)+strlen("//fluid")+1)*sizeof(char));
+  sprintf(projectdir,"%s\\fluid",homedir);
+  wprocess(projectdir,0);
+  free(projectdir);
 #else  
   ptr = popen("fluid &","r");
   pclose(ptr);
@@ -1448,7 +1608,7 @@ void quit_cb(Fl_Widget*, void*) {
   FILE *ptr = popen("rm -f fldevrun.sh","r");
   pclose(ptr);
   if(delbak) removebackupfiles();
-#if MSDOS
+#ifdef MSDOS
   GrClose();
 #endif
   exit(0);
@@ -1550,7 +1710,7 @@ void saveas_cb() {
 
 
 
-void make_(Fl_Widget* w, void* v, int mode=0) {
+void make_(Fl_Widget* w, void* v, int mode) {
   EditorWindow* e = window;
   FILE *ptr;
   Fl_Text_Editor *o = e->output;
@@ -1566,7 +1726,7 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   e->show_output();
   e->redraw();
   
-#if MSDOS
+#ifdef MSDOS
   if(mode==2) //compile
   { 
   	char *fname = strdup(filename_wo_path);
@@ -1585,7 +1745,34 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   system(buf); //output to errorlog.make, read into output window below as errors
 
   ptr = fopen("makelog.mak","r"); //will be read below
-#else  
+  
+#elif _WIN32
+  //ptr = popen("rm errorlog.make 2> /dev/null","r"); 
+  //pclose(ptr);
+
+  if(mode==2) //compile
+  { 
+  	char *fname = strdup(filename_wo_path);
+  	char *name_wo_ext = fl_filename_setext(fname,".o");
+  	sprintf(buf,"%s/domake.bat %s",project.pr_dir.c_str(),name_wo_ext); //"mingw32-make %s 2>errorlog.make >makelog.make",name_wo_ext);
+  	if(fname) free(fname);
+  	//cout << buf << endl;
+  }
+  //make clean
+  else if(mode==1) sprintf(buf,"%s/domake.bat clean",project.pr_dir.c_str()); //"mingw32-make clean 2>errorlog.make >makelog.make"); 
+  //make
+  else if(mode==0) sprintf(buf,"%s/domake.bat",project.pr_dir.c_str()); //"""mingw32-make 2>errorlog.make >makelog.make");
+
+  else return;
+  wprocess((char*)buf,1);
+  //system(buf);
+  
+  sprintf(buf,"%s/makelog.make",project.pr_dir.c_str());
+  ptr = fopen(buf,"r"); //will be read below
+  //ptr = fopen("makelog.make","r"); //will be read below
+  //ptr = popen(buf,"r");
+
+#else  //Linux
   ptr = popen("rm errorlog.make 2> /dev/null","r"); 
   pclose(ptr);
 
@@ -1605,7 +1792,8 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   else return;
 
   ptr = popen(buf,"r");
-#endif //MSDOS
+#endif //MSDOS, _Win32, Linux
+
   op_stylebuf->remove(0,op_stylebuf->length());
   
   op_stylebuf->append("AAAAA");
@@ -1620,7 +1808,7 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
 	Fl::check();
 	count++;
   } 
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
   fclose(ptr);
 #else  
   pclose(ptr);
@@ -1628,8 +1816,11 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   outp="";
 //#endif //MSDOS
   
-#if MSDOS
+#ifdef MSDOS
   ptr = fopen("errorlog.mak","r");
+#elif _WIN32
+  sprintf(buf,"%s/errorlog.make",project.pr_dir.c_str());
+  ptr = fopen(buf,"r");
 #else  
   ptr = fopen("errorlog.make","r");
 #endif
@@ -1655,7 +1846,11 @@ void make_(Fl_Widget* w, void* v, int mode=0) {
   outputtb->append((outp + erroutp).c_str());
   o->insert_position(outputtb->length());
   o->show_insert_position();
+#if defined(MSDOS ) || defined(_WIN32)
   fclose(ptr);
+#else  
+  fclose(ptr);
+#endif  
   linecount = count+2;
     
 }
@@ -1971,12 +2166,13 @@ void pr_opt_cb(Fl_Widget*, void*) {
 void open_pr_cb() {
   if (!check_save()) return;
   if(!check_project_save()) return;
-
   char *projectdir;
   char *homedir = getenv("HOME");
 
-#if MSDOS
+#ifdef MSDOS
   char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fld",".");
+#elif _WIN32
+  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev",".");
 #else
   projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
   if (homedir != NULL) sprintf(projectdir,"%s/fldev/",homedir);
@@ -1998,6 +2194,10 @@ void open_pr_cb() {
 		chdir(dir);
   }
   project.addToBrowser(window->pr_browser); 
+  window->fb_label->value( strdup( (project.pr_dir+string("/")).c_str() ) );
+  window->file_browser->load(project.pr_dir.c_str());
+  //window->file_browser->reload();
+  
 
   for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
   add_recent_project_to_menu(newfile);
@@ -2034,12 +2234,15 @@ void new_pr_cb() {
   
   project.name = trim(pr_name_input->value());
   project.pr_dir = trim(pr_dir_input->value());
+  project.own_makefile = trim(pr_own_makefile->value());
+  project.use_own_makefile = 0;
+  if(own_make_chk->value()) project.use_own_makefile = 1;
 
   tmpbuf = strdup(project.pr_dir.c_str());
   if (tmpbuf[strlen(tmpbuf)-1] == '/') tmpbuf[strlen(tmpbuf)-1] = '\0';
   project.pr_dir = tmpbuf;
   free(tmpbuf);
-#if MSDOS
+#ifdef MSDOS
   project.pr_filename = project.pr_dir + "/" + project.name + ".fld";
 #else  
   project.pr_filename = project.pr_dir + "/" + project.name + ".fldev";
@@ -2050,29 +2253,43 @@ void new_pr_cb() {
   }
 
   project.binfilename = tmpbuf;
-#if MSDOS
+#ifdef MSDOS
   project.oDir = ".";
   project.Bin = ".";
 #else
   char *projectdir;
-  char *homedir = getenv("HOME");
-  projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
-  if (homedir != NULL) sprintf(projectdir,"%s/fldev/",homedir);
-  project.oDir = projectdir;
-  project.Bin = projectdir;
+  #ifdef _WIN32
+    char homedir[PATH_MAX];
+    int err = get_app_path(homedir, PATH_MAX);
+    projectdir = (char*)malloc((strlen(homedir)+strlen("1234567")+1)*sizeof(char));
+    if (homedir != NULL) sprintf(projectdir,"%s",homedir);
+  #else  
+    char *homedir = getenv("HOME");
+    projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
+    if (homedir != NULL) sprintf(projectdir,"%s/fldev/",homedir);
+  #endif
+  project.oDir = project.pr_dir; //projectdir;
+  project.Bin = project.pr_dir; //projectdir;
 #endif
   if(x_app->value()) {
-#if MSDOS
-  	project.libs = "-lfltk -lfltk_images -lfltk_forms -lpng -lz -ljpeg -lNX11 -lnano-X -lfreetype -lm";
+#ifdef MSDOS
+  	project.libs = "-lfltk_images -lfltk_forms -lfltk -lpng -lz -ljpeg -lNX11 -lnano-X -lfreetype -lm";
   	project.libdirs = "-L/djgpp/lib";
   	project.incdirs = "-I/djgpp/include";
 #else
 #if USE_NXLIB
-  	project.libs = "-lNX11 -lnano-X -lfltk -lfltk_images -lfltk_forms -lpng -lz -ljpeg -lfreetype -lm";
+  	project.libs = "-lNX11 -lnano-X -lfltk -lfltk_images -lfltk_forms -lfltk_png -lfltk_z -lfltk_jpeg -lfreetype -lm";
   	project.libdirs = "-L/usr/local/lib";
   	project.incdirs = "-I/usr/include";
+#elif _WIN32
+    char tmpbuffer[512];
+  	project.libs = "-mwindows -static-libgcc -static-libstdc++ -lfltk_images -lfltk_forms -lfltk_png -lfltk_z -lfltk_jpeg -lfltk -lm -lole32 -luuid -lcomctl32 -lwsock32";
+  	sprintf(tmpbuffer,"-L%s/lib",homedir);
+	project.libdirs = tmpbuffer;
+	sprintf(tmpbuffer,"-I%s/include",homedir);
+	project.incdirs = tmpbuffer;
 #else
-  	project.libs = "-lX11 -lfltk -lfltk_images -lfltk_forms -lpng -lz -ljpeg -lm";
+  	project.libs = "-lX11 -lfltk_images -lfltk_forms -lfltk -lpng -lz -ljpeg -lm";
   	project.libdirs = "-L/usr/X11R6/lib";
   	project.incdirs = "-I/usr/X11R6/include";
 #endif
@@ -2080,14 +2297,15 @@ void new_pr_cb() {
 	project.run_in_console = false;
     console_check->value(0);
   }
-  else {
-  	project.libs = "";
+  else { //console program
+  	project.libs = "-static-libgcc -static-libstdc++";
   	project.libdirs = "";
   	project.incdirs = "";
 	project.run_in_console = true;
 	console_check->value(1);
   }
   
+  project.cflags = "-O2"; //default compiler flags
 
   chdir(project.pr_dir.c_str());
   
@@ -2107,9 +2325,20 @@ void new_pr_cb() {
 	  add_recent_file_to_menu(filename);
   }
   else new_cb(0,0);
+  
+//do this to load option panel with defaults
   project.save();
   project.load();
-  
+
+  bufchanged=1;
+  project.modified=1;
+  pr_opt_cb(NULL,(void*)0); //set options for new project
+
+  project.save();
+  project.load(); 
+
+window->fb_label->value( strdup( (project.pr_dir+string("/")).c_str() ) );
+window->file_browser->load(project.pr_dir.c_str());
 
   for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
   menubar->copy(menuitems, window);
@@ -2117,6 +2346,7 @@ void new_pr_cb() {
   
 	free(tmpbuf);
   //set_title(window);
+  //pr_opt_cb; //set options for new project
 }
 
 
@@ -2274,10 +2504,9 @@ void fb_showhidden_cb(Fl_Widget* o, void*)
 
 
 void show_help(const char *name) {
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
     return;
 #endif
-
   const char	*docdir;
   char		helpname[1024];
   
@@ -2305,7 +2534,7 @@ void show_help(const char *name) {
 
 int ask_for_download()
 {
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
     return 0;
 #endif
 
@@ -2363,11 +2592,16 @@ done\n",homedir);
 void show_ref(const char *name) {
   char	*docdir;
   char		helpname[1024];
+#ifdef _WIN32
+  char homedir[PATH_MAX];
+  int err = get_app_path(homedir, PATH_MAX);
+#else  
   char *homedir = getenv("HOME");
+#endif
 
   if (!help_dialog) help_dialog = new Fl_Help_Dialog();
 
-#if MSDOS
+#ifdef MSDOS
   //snprintf(helpname, sizeof(helpname), "%s/%s", ".", "cppref");  
   snprintf(helpname, sizeof(helpname), "%s", "cppref/index.html");  
 #else
@@ -2406,7 +2640,7 @@ void load_config_file()
 	int x,y,w,h,sm_in,rp_al;
 	int BUFSIZE=255;
 	char *homedir = getenv("HOME");
-#if MSDOS	
+#if defined(MSDOS ) || defined(_WIN32)
 	sprintf(buf,"fldev.cfg");
 #else
 	sprintf(buf,"%s/.fldev_cfg",homedir);
@@ -2492,7 +2726,7 @@ void load_language_file()
 	char buf[255],line[255];
 	int mode=0;
 	char *homedir = getenv("HOME");
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
 	sprintf(buf,"fldev.lng");
 #else
 	sprintf(buf,"%s/.fldev_lng",homedir);
@@ -2784,7 +3018,7 @@ void load_lang_cb(char *file)
 	char *homedir = getenv("HOME");
 	char buf[255];
 	
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
 	if(file==NULL){
 		unlink("fldev.lng");
 	} else {
@@ -2810,7 +3044,7 @@ void save_config_file()
 	char buf[255];
 	int BUFSIZE=255;
 	char *homedir = getenv("HOME");
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
 	sprintf(buf,"fldev.cfg");
 #else
 	sprintf(buf,"%s/.fldev_cfg",homedir);
@@ -2918,6 +3152,10 @@ void recent_project_cb(Fl_Widget* w, void *v)
 		  if(window->pr_browser->text(1)!=NULL)
 		  	load_file( (char *)window->pr_browser->text(1) , -1 );
 		  else new_cb(0,0);
+		  
+  		window->fb_label->value( strdup( (project.pr_dir+string("/")).c_str() ) );
+  		window->file_browser->load(project.pr_dir.c_str());		  
+		  
 		  for(int i = 0; i < 10; i++) menuitems[rec_pr_menu_index+i].activate();
 		  add_recent_project_to_menu(newfile);
 		  menubar->copy(menuitems, window);
@@ -3091,9 +3329,13 @@ if (t==12){
 
 void home_cb(Fl_Widget* w, void*)
 {
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
     static char pwd_path[512];
+#if MSDOS
     getwd(pwd_path);
+#else
+int err = get_app_path(pwd_path, PATH_MAX);
+#endif
 	window->file_browser->load(pwd_path);
     strcat(pwd_path,"/");
 	window->fb_label->value(strdup(pwd_path));
@@ -3627,9 +3869,10 @@ static int old_ins_mode, old_first_line, old_last_line;
 
 
 int main(int argc, char **argv) {
-  Pixmap p, mask;
-
-#if MSDOS
+#ifndef _WIN32
+  Fl_Pixmap p, mask;
+#endif
+#ifdef MSDOS
 __djgpp_set_ctrl_c(0);
 //select the grad1 scheme - looks a bit like Win7
 setenv("FLTK_SCHEME","grad1",0); //do not replace existing
@@ -3652,7 +3895,11 @@ setenv("FLTK_SCHEME","grad1",0); //do not replace existing
   load_default_icons();
   
   window = (EditorWindow*)make_form();
+#ifndef _WIN32  
   window->icon((char *)p);
+#else
+  window->icon((char*)LoadIcon(fl_display, MAKEINTRESOURCE(101)));  
+#endif
   window->show(1,argv);
   //window->show();
   
@@ -3680,9 +3927,13 @@ setenv("FLTK_SCHEME","grad1",0); //do not replace existing
 	//open file
 	if(r == 1) {
 		char buf[255];
-#if MSDOS
+#if defined(MSDOS ) || defined(_WIN32)
         char pwd_buf[512];
+#ifdef MSDOS        
         getwd(pwd_buf);
+#else
+int err = get_app_path(pwd_buf, PATH_MAX);
+#endif        
 		sprintf(buf,"%s/%s",pwd_buf,filename_wo_path);
 #else		
 		sprintf(buf,"%s/%s",getenv("PWD"),filename_wo_path);

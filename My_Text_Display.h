@@ -36,6 +36,8 @@
 #include <FL/Fl_Text_Display.H>
 
 class FL_EXPORT My_Text_Display: public Fl_Text_Display {
+public:
+      My_Text_Display();
       friend class My_Text_Editor;
 };
 

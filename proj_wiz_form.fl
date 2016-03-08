@@ -1,18 +1,21 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0104 
+version 1.0302 
 header_name {.h} 
 code_name {.cpp}
-decl {\#include <FL/Fl_File_Chooser.H>} {public
+decl {\#include "globals.h"} {public local
 } 
 
-decl {bool pr_wiz_ok;} {public
+decl {\#include <FL/Fl_File_Chooser.H>} {public local
+} 
+
+decl {bool pr_wiz_ok;} {public local
 } 
 
 Function {make_proj_wizard()} {open
 } {
   Fl_Window proj_wiz {
     label {New Project} open
-    xywh {474 187 503 248} type Double modal visible
+    xywh {474 187 498 314} type Double modal visible
   } {
     Fl_Input pr_dir_input {
       label {Project Directory}
@@ -21,40 +24,73 @@ Function {make_proj_wizard()} {open
     Fl_Button pr_wiz_browse_btn {
       label {...}
       callback {pr_dir_input->value(fl_dir_chooser("Choose Directory",0,0));}
-      xywh {450 65 35 25}
+      xywh {455 65 35 25}
     }
     Fl_Input pr_name_input {
-      label {Project Name} selected
+      label {Project Name}
       xywh {130 25 320 25}
     }
     Fl_Button pr_wiz_ok_btn {
       label OK
       callback {pr_wiz_ok=true;
 proj_wiz->hide();}
-      xywh {320 205 80 25}
+      xywh {320 270 80 25}
     }
     Fl_Button pr_wiz_cancel_btn {
       label Cancel
       callback {proj_wiz->hide();}
-      xywh {410 205 80 25}
+      xywh {410 270 80 25}
     }
     Fl_Group {} {
       label Type open
-      xywh {130 100 185 65} box THIN_UP_BOX labeltype EMBOSSED_LABEL align 21
+      xywh {130 100 320 65} box THIN_UP_BOX labeltype EMBOSSED_LABEL align 21
     } {
       Fl_Round_Button x_app {
-        label {X11 App}
+        label {FLTK / X11 App}
         xywh {180 135 85 20} type Radio down_box ROUND_DOWN_BOX
+        code0 {x_app->value(1);}
       }
       Fl_Round_Button con_app {
-        label {Console App}
+        label {Console App} selected
         xywh {180 110 110 25} type Radio down_box ROUND_DOWN_BOX
-        code0 {con_app->value(1);}
+        code0 {con_app->value(0);}
       }
+      Fl_Round_Button lib_static {
+        label {Static Library}
+        xywh {320 110 110 25} down_box ROUND_DOWN_BOX hide deactivate
+        code0 {lib_static->value(0);}
+      }
+      Fl_Round_Button lib_shared {
+        label {Shared Library}
+        xywh {320 130 120 25} down_box ROUND_DOWN_BOX hide deactivate
+        code0 {lib_shared->value(0);}
+      }
+    }
+    Fl_Input pr_own_makefile {
+      label {Own Makefile}
+      xywh {130 170 320 25} hide deactivate
+    }
+    Fl_Button {} {
+      label add
+      callback {char *newfile = fl_file_chooser("Select Makefile", "Make*.*", "");
+
+if(newfile=="") return;
+if (newfile != NULL) 
+{
+	char rel[255];
+	fl_filename_relative(rel,newfile);
+	pr_own_makefile->value(trim(string(pr_own_makefile->value())+ " " + rel).c_str());
+	pr_changed = true;
+}}
+      xywh {455 170 35 25} hide deactivate
     }
     Fl_Check_Button main_cpp_chk {
       label {Generate 'main.cpp'}
-      xywh {130 170 155 25} down_box DOWN_BOX
+      xywh {130 235 155 25} down_box DOWN_BOX
+    }
+    Fl_Check_Button own_make_chk {
+      label {Use own makefile}
+      xywh {130 205 150 25} down_box DOWN_BOX hide deactivate
     }
   }
 } 

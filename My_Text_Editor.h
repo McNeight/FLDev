@@ -36,6 +36,8 @@
 #define My_Text_Editor_ANY_STATE  (-1L)
 
 class FL_EXPORT My_Text_Editor : public Fl_Text_Editor {
+public:
+      My_Text_Editor();      
 };
 
 #endif
