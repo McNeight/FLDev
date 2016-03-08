@@ -1,0 +1,56 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0104 
+header_name {.h} 
+code_name {.cpp}
+decl {int text_size;} {public
+} 
+
+decl {int save_window_size;} {public
+} 
+
+decl {int auto_hide;} {public
+} 
+
+Function {make_pref_form()} {open
+} {
+  Fl_Window pref_window {
+    label Preferences open selected
+    xywh {374 202 529 331} type Double align 5 modal visible
+  } {
+    Fl_Button pref_ok_btn {
+      label OK
+      callback {text_size = text_size_choice->value() * 2 + 6;
+save_window_size = save_wsoe_check->value();
+auto_hide = hide_output_check->value();
+pref_window->hide();}
+      xywh {345 295 85 25}
+    }
+    Fl_Button pref_cancel_btn {
+      label Cancel
+      callback {pref_window->hide();}
+      xywh {435 295 80 25}
+    }
+    Fl_Choice text_size_choice {
+      label {Text Size} open
+      xywh {95 35 60 25} down_box BORDER_BOX
+      code0 {text_size_choice->add("6");text_size_choice->add("8");text_size_choice->add("10");text_size_choice->add("12");text_size_choice->add("14");text_size_choice->add("16");text_size_choice->add("18");text_size_choice->add("20");}
+      code1 {text_size_choice->value(3);}
+    } {}
+    Fl_Check_Button smart_indent_check {
+      label {Use Smart-Indent Option}
+      xywh {30 65 180 25} down_box DOWN_BOX
+    }
+    Fl_Check_Button save_wsoe_check {
+      label {Save Window Size On Exit}
+      xywh {30 90 195 25} down_box DOWN_BOX
+    }
+    Fl_Check_Button hide_output_check {
+      label {Auto-hide Output Window}
+      xywh {30 115 195 25} down_box DOWN_BOX
+    }
+    Fl_Check_Button rec_pr_check {
+      label {Open previous project on startup}
+      xywh {30 140 235 25} down_box DOWN_BOX
+    }
+  }
+} 

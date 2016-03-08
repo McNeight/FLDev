@@ -1,0 +1,12 @@
+FLDev
+fldev
+.
+.
+-lX11 -lXpm -lfltk_images -lm -lfltk_forms -lfltk -lpng -lz -ljpeg
+-L/usr/X11R6/lib
+-I/usr/X11R6/include
+
+-Os
+0
+editor.cpp pref_form.cpp proj_form.cpp proj_wiz_form.cpp extras.cpp
+pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm

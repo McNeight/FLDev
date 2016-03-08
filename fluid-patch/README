@@ -1,0 +1,15 @@
+Fluid Patch for fltk version 1.1.4
+
+This patch adds a F12-shortcut to fluid, that does "save, write code and exit",
+so you can switch between FLDev and fluid with F12.
+I recommend to disable "Show Completion Dialogs" in fluid GUI Settings.
+
+INSTALL:
+
+		$ cp fluid_patch_fltk-1.1.4.diff /path/to/fltk-1.1.4/
+		$ cd /path/to/fltk-1.1.4
+		$ patch < fluid_patch_fltk-1.1.4.diff
+		$ cd fluid
+		$ make
+
+as root:	$ make install

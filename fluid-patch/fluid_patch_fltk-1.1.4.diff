@@ -1,0 +1,27 @@
+--- fluid/fluid.cxx	2003-08-02 21:17:30.000000000 +0000
++++ fluid/fluid.cxx.new	2005-03-02 11:10:29.489286480 +0000
+@@ -305,6 +305,16 @@
+   }
+ }
+ 
++
++
++void save_write_exit_cb(Fl_Widget *w, void *v) {
++	save_cb(w,v);
++	write_cb(w,v);
++	exit_cb(w,v);
++}
++
++
++
+ void write_strings_cb(Fl_Widget *, void *) {
+   static const char *exts[] = { ".txt", ".po", ".msg" };
+   if (!filename) {
+@@ -489,6 +499,7 @@
+   {"&Save", FL_CTRL+'s', save_cb, 0},
+   {"Save &As...", FL_CTRL+FL_SHIFT+'s', save_cb, (void*)1, FL_MENU_DIVIDER},
+   {"Write &code", FL_CTRL+FL_SHIFT+'c', write_cb, 0},
++  {"Sa&ve, Write code, Exit", FL_F+12, save_write_exit_cb, 0},
+   {"&Write strings", FL_CTRL+FL_SHIFT+'w', write_strings_cb, 0, FL_MENU_DIVIDER},
+   {"&Quit", FL_CTRL+'q', exit_cb},
+   {0},

@@ -1,0 +1,56 @@
+# data file for the Fltk User Interface Designer (fluid)
+version 1.0104 
+header_name {.h} 
+code_name {.cpp}
+decl {\#include <FL/Fl_File_Chooser.H>} {public
+} 
+
+decl {bool pr_wiz_ok;} {public
+} 
+
+Function {make_proj_wizard()} {open
+} {
+  Fl_Window proj_wiz {
+    label {New Project} open selected
+    xywh {157 168 500 210} type Double modal visible
+  } {
+    Fl_Input pr_dir_input {
+      label {Project Directory:}
+      xywh {130 65 320 25}
+    }
+    Fl_Button pr_wiz_browse_btn {
+      label {...}
+      callback {pr_dir_input->value(fl_dir_chooser("Choose Directory",0,0));}
+      xywh {450 65 35 25}
+    }
+    Fl_Input pr_name_input {
+      label {Project Name:}
+      xywh {130 25 320 25}
+    }
+    Fl_Button pr_wiz_ok_btn {
+      label OK
+      callback {pr_wiz_ok=true;
+proj_wiz->hide();}
+      xywh {320 170 80 25}
+    }
+    Fl_Button pr_wiz_cancel_btn {
+      label Cancel
+      callback {proj_wiz->hide();}
+      xywh {410 170 80 25}
+    }
+    Fl_Group {} {
+      label {Type:} open
+      xywh {130 100 145 50} box THIN_UP_BOX align 4
+    } {
+      Fl_Round_Button x_app {
+        label {X11 App}
+        xywh {155 125 85 25} type Radio down_box ROUND_DOWN_BOX
+      }
+      Fl_Round_Button con_app {
+        label {Console App}
+        xywh {155 100 110 25} type Radio down_box ROUND_DOWN_BOX
+        code0 {con_app->value(1);}
+      }
+    }
+  }
+} 
