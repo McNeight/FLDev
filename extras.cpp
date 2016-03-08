@@ -235,29 +235,19 @@ static void kill_selection(Fl_Text_Editor* e) {
 int Fl_Text_Editor_ext::handle(int event) {
   if (!buffer()) return 0;
 
-  if (event == FL_PUSH && Fl::event_button() == 2) {
-    dragType = -1;
-    Fl::paste(*this, 0);
-    Fl::focus(this);
-    if (when()&FL_WHEN_CHANGED) do_callback(); else set_changed();
-    return 1;
-  }
 
   if(event==FL_KEYBOARD) {
       return handle_key_ext();
   }
+  
 
-  return Fl_Text_Display::handle(event);
+  return Fl_Text_Editor::handle(event);
 }
 
 
 
 
 int Fl_Text_Editor_ext::handle_key_ext() {
-  // Call FLTK's rules to try to turn this into a printing character.
-  // This uses the right-hand ctrl key as a "compose prefix" and returns
-  // the changes that should be made to the text, as a number of
-  // bytes to delete and a string to insert:
   
   
   int del;
@@ -292,7 +282,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 	return 1;
   }
 
-  if(Fl::event_key()==FL_Home) {
+  else if(Fl::event_key()==FL_Home) {
 	int pos;
 	char *line = "";
 	
@@ -305,6 +295,7 @@ int Fl_Text_Editor_ext::handle_key_ext() {
 	if(state == FL_SHIFT) buffer()->select(insert_position(),old);
 	if(insert_position() != old) return 1;
   }
+  else 0;
  
   Key_Func f;
   f = bound_key_function(key, state, global_key_bindings);

@@ -30,17 +30,17 @@ cleanall:	cleanobjs cleanbin
 $(Bin)/fldev: $(EXOBJS)
 	$(LD) -o $(Bin)/fldev $(EXOBJS) $(incDirs) $(libDirs) $(LD_FLAGS) $(LIBS)
 
-$(oDir)/editor.o: editor.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm
+$(oDir)/editor.o: editor.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
 	$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<
 
-$(oDir)/pref_form.o: pref_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm
+$(oDir)/pref_form.o: pref_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
 	$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<
 
-$(oDir)/proj_form.o: proj_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm
+$(oDir)/proj_form.o: proj_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
 	$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<
 
-$(oDir)/proj_wiz_form.o: proj_wiz_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm
+$(oDir)/proj_wiz_form.o: proj_wiz_form.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
 	$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<
 
-$(oDir)/extras.o: extras.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm
+$(oDir)/extras.o: extras.cpp pref_form.h proj_form.h proj_wiz_form.h extras.h fldevicon.xpm icon_pixmaps.h
 	$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<

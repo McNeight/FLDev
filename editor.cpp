@@ -4,14 +4,14 @@
 		
 		Lightweight Integrated Development Environment
 
-		version:	0.5.2
+		version:	0.5.3
 		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
 		descr.:	FLDev is a IDE designed for older systems and small C/C++ Applications
 				and is based on the	Editor described in the FLTK Manual.
 
-		 
+		  
 		This program is free software; you can redistribute it and/or
 		modify it under the terms of the GNU General Public License
 		as published by the Free Software Foundation; either version 2
@@ -28,11 +28,12 @@
 */
 /////////////////////////////////////////////////////////////////////////////////////////////
 
+	
 
 // TODO:
 /*
 		make better comments
-
+		debugging function
 */
 
 #include <stdlib.h>
@@ -46,6 +47,7 @@
 #include <deque>
 #include <X11/xpm.h>
 #include "fldevicon.xpm"
+#include "icon_pixmaps.h"
 
 #ifdef __MWERKS__ 
 #define FL_DLL
@@ -673,8 +675,8 @@ void EditorWindow::show_output()
 {
 	Fl_Text_Editor *o = output;
 
-	editor->size(editor->w(),h()-147);
-	tabs->size(tabs->w(),h()-147);
+	editor->size(editor->w(),h()-167);	//edited
+	tabs->size(tabs->w(),h()-167); 	//edited
 	o->resize(0,editor->y() + editor->h()+1 ,w(),100);
 	o->show();
 	Fl::check();
@@ -684,8 +686,8 @@ void EditorWindow::hide_output()
 {
 	Fl_Text_Editor *o = output;
 
-	editor->size(editor->w(),h()-46);
-	tabs->size(tabs->w(),h()-46);
+	editor->size(editor->w(),h()-66);	//edited
+	tabs->size(tabs->w(),h()-66);	//edited
 	o->hide();
 }
  
@@ -804,20 +806,32 @@ void save_file(char *newfile) {
 
 
 void copy_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
-  Fl_Text_Editor::kf_copy(0, e->editor);
+  	EditorWindow* e = window;
+  	Fl_Text_Editor::kf_copy(0, e->editor);
+	Fl::focus(e->editor);
 }
-
-
 
 
 
 void cut_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
-  Fl_Text_Editor::kf_cut(0, e->editor);
+  	EditorWindow* e = window;
+  	Fl_Text_Editor::kf_cut(0, e->editor);
+	Fl::focus(e->editor);
 }
 
 
+
+void paste_cb(Fl_Widget*, void* v) {
+	EditorWindow* e = window;
+	Fl_Text_Editor::kf_paste(0, e->editor);
+	Fl::focus(e->editor);
+}
+
+void undo_cb(Fl_Widget*, void* v) {
+	EditorWindow* e = window;
+	Fl_Text_Editor::kf_undo(0, e->editor);
+	Fl::focus(e->editor);
+}
 
 
 void delete_cb(Fl_Widget*, void*) {
@@ -828,7 +842,7 @@ void delete_cb(Fl_Widget*, void*) {
 
 
 void find_cb(Fl_Widget* w, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
+  EditorWindow* e = window;
   const char *val;
   val = fl_input("Search String:", e->search);
   if (val != NULL) {
@@ -995,11 +1009,6 @@ void insert_cb(Fl_Widget*, void *v) {
   if (newfile != NULL) load_file(newfile, w->editor->insert_position());
 }
 
-void paste_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
-  Fl_Text_Editor::kf_paste(0, e->editor);
-}
-
 
 void close_cb(Fl_Widget*, void* v) {
   if(Fl::event_key() == FL_Escape) return;
@@ -1017,7 +1026,6 @@ void close_cb(Fl_Widget*, void* v) {
   FILE *ptr = popen("rm -f fldevrun.sh","r");
   pclose(ptr);
 
-  //if (!num_windows) 
   exit(0);
 }
 
@@ -1032,12 +1040,12 @@ void quit_cb(Fl_Widget*, void*) {
 }
 
 void replace_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
+  EditorWindow* e = window;
   e->replace_dlg->show();
 }
 
 void replace2_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
+  EditorWindow* e = window;
   const char *find = e->replace_find->value();
   const char *replace = e->replace_with->value();
 
@@ -1102,7 +1110,7 @@ void replall_cb(Fl_Widget*, void* v) {
 }
 
 void replcan_cb(Fl_Widget*, void* v) {
-  EditorWindow* e = (EditorWindow*)v;
+  EditorWindow* e = window;
   e->replace_dlg->hide();
 }
 
@@ -1128,7 +1136,7 @@ void saveas_cb() {
 
 
 void make_(Fl_Widget* w, void* v, int mode=0) {
-  EditorWindow* e = (EditorWindow*)v;
+  EditorWindow* e = window;
   FILE *ptr;
   Fl_Text_Editor *o = e->output;
   char buf[255];
@@ -1253,7 +1261,7 @@ void munindent_cb() {
 
 
 void about_cb() {
-	fl_message("FLDev IDE\nVersion 0.5.2\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
+	fl_message("FLDev IDE\nVersion 0.5.3\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
 }
 
 
@@ -1311,7 +1319,7 @@ Fl_Menu_Item menuitems[] = {
     { "&Make",       FL_F + 7, (Fl_Callback *)make_cb },
     { "&Run",    FL_F + 8, (Fl_Callback *)run_cb },
     { "&Compile",    FL_F + 6, (Fl_Callback *)compile_cb },
-    { "Compile &and Run", FL_F + 9, (Fl_Callback *)make_run_cb },
+    { "Make &and Run", FL_F + 9, (Fl_Callback *)make_run_cb },
     { "Make C&lean", 0, (Fl_Callback *)make_clean_cb , 0, FL_MENU_DIVIDER},
     { "&Generate Makefile", 0, (Fl_Callback *)generate_makefile_cb , 0, FL_MENU_DIVIDER},
     { "&Options...",       FL_CTRL + FL_ALT + 'p', (Fl_Callback *)pr_opt_cb },
@@ -1938,7 +1946,24 @@ void home_cb(Fl_Widget* w, void*)
 	window->file_browser->load(getenv("HOME"));
 }
 
-
+class SmartButton : public Fl_Button
+{
+	public:
+		SmartButton(int x, int y, int w, int h) : Fl_Button(x,y,w,h) { 
+			box(FL_FLAT_BOX); 
+			down_box(FL_DOWN_BOX); 
+			
+		}
+		
+		void draw()
+		{
+			if (type() == FL_HIDDEN_BUTTON) return;
+  			Fl_Color col = value() ? selection_color() : color();
+			  draw_box(value() ? (down_box()?down_box():fl_down(box())) : box(), col);
+			  draw_label();	
+		}
+		
+};
 
 Fl_Window* make_form() {
     EditorWindow* w = new EditorWindow(660, 400, title);
@@ -1947,12 +1972,176 @@ Fl_Window* make_form() {
 	int tabs_size = 150;
     w->begin();
 
-    menubar = new Fl_Menu_Bar(0, 0, 660, 30);    
+    menubar = new Fl_Menu_Bar(0, 0, 660, 25);    
 	menuitems[24].set();
     menubar->copy(menuitems, w);
+    menubar->box(FL_THIN_UP_BOX);
+    menubar->down_box(FL_BORDER_BOX);
+	menubar->selection_color(FL_WHITE);
+	
+	
+	/////////////////////////////////////////////////////////////////////
+	//SmartIcons
+	Fl_Group *smartbar = new Fl_Group(0,25,660,25);
+	smartbar->box(FL_THIN_UP_BOX);
+	int temp_space = 0, ts_size = 10;
+	smartbar->begin();
+	int count = 0;
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_new);
+		o->callback(new_cb);
+		o->tooltip("New File");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_open);
+		o->callback(open_cb);
+		o->tooltip("Open File");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_save);
+		o->callback((Fl_Callback *)save_cb);
+		o->tooltip("Save File");
+		smartbar->add(o);
+		count++;
+	}
+	{//SPACER
+		Fl_Box *o = new Fl_Box(FL_ENGRAVED_BOX,2+22*count + temp_space + ts_size/2,26,1,22,"");
+		smartbar->add(o);
+		temp_space+=ts_size;
+	}//
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_browser);
+		o->callback((Fl_Callback *)show_browser_cb);
+		o->tooltip("Toggle File Browser");
+		smartbar->add(o);
+		count++;
+	}
+	{//SPACER
+		Fl_Box *o = new Fl_Box(FL_ENGRAVED_BOX,2+22*count + temp_space + ts_size/2,26,1,22,"");
+		smartbar->add(o);
+		temp_space+=ts_size;
+	}//
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_copy);
+		o->callback(copy_cb);
+		o->tooltip("Copy");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_cut);
+		o->callback(cut_cb);
+		o->tooltip("Cut");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_paste);
+		o->callback(paste_cb);
+		o->tooltip("Paste");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_undo);
+		o->callback(undo_cb);
+		o->tooltip("Undo");
+		smartbar->add(o);
+		count++;
+	}
+	{//SPACER
+		Fl_Box *o = new Fl_Box(FL_ENGRAVED_BOX,2+22*count + temp_space + ts_size/2,26,1,22,"");
+		smartbar->add(o);
+		temp_space+=ts_size;
+	}//
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_search);
+		o->callback(find_cb);
+		o->tooltip("Search");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_search_and_replace);
+		o->callback(replace_cb);
+		o->tooltip("Replace");
+		smartbar->add(o);
+		count++;
+	}
+	{//SPACER
+		Fl_Box *o = new Fl_Box(FL_ENGRAVED_BOX,2+22*count + temp_space + ts_size/2,26,1,22,"");
+		smartbar->add(o);
+		temp_space+=ts_size;
+	}//
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_compile);
+		o->callback(make_cb);
+		o->tooltip("Make");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_run);
+		o->callback(run_cb);
+		o->tooltip("Run");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_compile_run);
+		o->callback(make_run_cb);
+		o->tooltip("Make and run");
+		smartbar->add(o);
+		count++;
+	}
+	{//SPACER
+		Fl_Box *o = new Fl_Box(FL_ENGRAVED_BOX,2+22*count + temp_space + ts_size/2,26,1,22,"");
+		smartbar->add(o);
+		temp_space+=ts_size;
+	}//
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_fluid);
+		o->callback(fluid_cb);
+		o->tooltip("Fluid Form Editor");
+		smartbar->add(o);
+		count++;
+	}
+	{
+		SmartButton *o = new SmartButton(2+22*count + temp_space,26,22,22);
+		o->image(image_term);
+		o->callback(xterm_cb);
+		o->tooltip("XTerm");
+		smartbar->add(o);
+		count++;
+	}
+	
+	smartbar->resizable(NULL);
+	smartbar->end();
 
 
-    w->editor = new Fl_Text_Editor_ext(pr_browsersize, 30, 660-tabs_size, 354);
+	/////////////////////////////////////////////////////////////////////
+
+
+
+    w->editor = new Fl_Text_Editor_ext(pr_browsersize, 50, 660-tabs_size, 334);	//edited
 	te = w->editor;
 	
     w->editor->buffer(textbuf);
@@ -1960,10 +2149,12 @@ Fl_Window* make_form() {
                               sizeof(styletable) / sizeof(styletable[0]),
 			      'A', style_unfinished_cb, 0);
     w->editor->textfont(FL_COURIER);
+    w->editor->end();
     w->statusbar = new Fl_Box(FL_EMBOSSED_BOX,0,384,615,16,"Zeile 1"); 
 
     w->outputwindowbutton = new Fl_Button(620,384,40,16,"Output");
     w->outputwindowbutton->callback(owbt_callback);
+    w->outputwindowbutton->visible_focus(0);
     w->outputwindowbutton->labelsize(10);
 
     w->output = new My_Text_Editor(0,285,660,99);
@@ -1976,9 +2167,10 @@ Fl_Window* make_form() {
     w->output->when(FL_WHEN_CHANGED); 
     w->output->hide_cursor();
     w->output->output();
+    w->output->end();
 
 	int browser_offset = 5;
-	w->tabs = new Fl_Tabs(0,30,pr_browsersize,354);
+	w->tabs = new Fl_Tabs(0,50,pr_browsersize,334);
 		Fl_Group *o = new Fl_Group(0,w->tabs->y()+20,w->tabs->w(),w->tabs->h()-20,"Project");
 			w->pr_browser = new Fl_Hold_Browser(o->x(),o->y()+browser_offset,o->w(),o->h()-browser_offset);
 			w->pr_browser->callback(pr_browser_cb);
@@ -2002,9 +2194,11 @@ Fl_Window* make_form() {
     w->statusbar->align(FL_ALIGN_LEFT | FL_ALIGN_INSIDE);
     w->statusbar->labelsize(10);
     w->resizable(w->editor);
-    w->callback((Fl_Callback *)close_cb, w);
+    w->callback((Fl_Callback *)quit_cb, w);
 
     w->end();
+    
+    
     textbuf->add_modify_callback(style_update, w->editor);
     textbuf->add_modify_callback(changed_cb, w);
     textbuf->call_modify_callbacks();
@@ -2017,7 +2211,6 @@ Fl_Window* make_form() {
 
     return w;
 }
-
 
 
 
@@ -2088,7 +2281,7 @@ int main(int argc, char **argv) {
 			oldspalte = spalte;
 			old_ins_mode = ins_mode;
 		}
-
+	//Fl::focus(window);
 		
   }
   return 1;
