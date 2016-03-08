@@ -3,10 +3,10 @@ hello
 .
 .
 
--L/usr/local/lib
--I/usr/include
 
 
+-g
+-g
 1
 main.cpp
 

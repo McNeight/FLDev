@@ -92,7 +92,7 @@ static void cb_pgui(Fl_Input*, void*) {
 }
 
 static void cb_add(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "");
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "", 1);
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -105,7 +105,7 @@ if (newfile != NULL)
 }
 
 static void cb_add1(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "");
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "", 1);
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -118,7 +118,7 @@ if (newfile != NULL)
 }
 
 static void cb_add2(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "");
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "", 1);
 
 if(newfile=="") return;
 if (newfile != NULL) 

@@ -4,7 +4,11 @@
  		
 		Lightweight Integrated Development Environment
 */
+#if MSDOS
+#define VERSION 	"130_DOS-1.5.8"
+#else
 #define VERSION 	"130_x11-1.5.8"
+#endif
 /*		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
@@ -55,6 +59,10 @@
 #endif
 
 #if MSDOS
+#include <sys/exceptn.h>
+#include <crt0.h>
+int _crt0_startup_flags = _CRT0_FLAG_NULLOK | _CRT0_FLAG_FILL_SBRK_MEMORY; //disable null pointer protection
+
 #include <mwin/nano-X.h>
 extern "C" {
 void toggle_text_mode();
@@ -709,7 +717,7 @@ void debug_cb(Fl_Widget *w, void *v) {
 #if MSDOS
    string command;
    //command = "runindos.bat gdb "+project.binfilename+".exe";
-   command = "gdb "+project.binfilename+".exe";
+   command = "gdb -q "+project.binfilename+".exe";
    toggle_text_mode();
    char *CurrWorkingDir = (char *)malloc(512);
    getcwd(CurrWorkingDir,512);
@@ -1090,7 +1098,8 @@ int  load_file(char *newfile, int ipos) {
   if(strncmp(newfile + strlen(newfile) - 4,".hxx",4) == 0) cppfile = true;
 
 #if MSDOS
-  if(strncmp(newfile + strlen(newfile) - 6,".fld",4) == 0) {
+  if((strncmp(newfile + strlen(newfile) - 4,".fld",4) == 0) || \
+     (strncmp(newfile + strlen(newfile) - 6,".fldev",4) == 0) ) {
 #else
   if(strncmp(newfile + strlen(newfile) - 6,".fldev",4) == 0) {
 #endif
@@ -1218,7 +1227,7 @@ void run_cb(Fl_Widget* w, void* v) {
   command = "runindos.bat "+project.binfilename+".exe";
 #else
 if (mode==1) {
-  command = "gdb " + project.Bin + "/" + project.binfilename;
+  command = "gdb -q " + project.Bin + "/" + project.binfilename;
 } else {
   command = project.Bin + "/" + project.binfilename;
 }
@@ -1966,16 +1975,14 @@ void open_pr_cb() {
   char *projectdir;
   char *homedir = getenv("HOME");
 
-  projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
-  sprintf(projectdir,"%s/fldev/",homedir);
-
 #if MSDOS
   char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fld",".");
 #else
+  projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
+  if (homedir != NULL) sprintf(projectdir,"%s/fldev/",homedir);
   char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev",projectdir,1);
-#endif
-
   free(projectdir);
+#endif
 
   if(newfile==NULL) return;
 
@@ -2042,16 +2049,15 @@ void new_pr_cb() {
 		if(isupper(*(tmpbuf+i))) *(tmpbuf+i) = tolower(*(tmpbuf+i));
   }
 
-  char *projectdir;
-  char *homedir = getenv("HOME");
-  projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
-  sprintf(projectdir,"%s/fldev/",homedir);
-
   project.binfilename = tmpbuf;
 #if MSDOS
   project.oDir = ".";
   project.Bin = ".";
 #else
+  char *projectdir;
+  char *homedir = getenv("HOME");
+  projectdir = (char*)malloc((strlen(homedir)+strlen("/fldev/")+1)*sizeof(char));
+  if (homedir != NULL) sprintf(projectdir,"%s/fldev/",homedir);
   project.oDir = projectdir;
   project.Bin = projectdir;
 #endif
@@ -2362,7 +2368,8 @@ void show_ref(const char *name) {
   if (!help_dialog) help_dialog = new Fl_Help_Dialog();
 
 #if MSDOS
-  snprintf(helpname, sizeof(helpname), "%s/%s", ".", "cppref");  
+  //snprintf(helpname, sizeof(helpname), "%s/%s", ".", "cppref");  
+  snprintf(helpname, sizeof(helpname), "%s", "cppref/index.html");  
 #else
   if ((docdir = getenv("CPP_REF_DOCDIR")) == NULL) {
 	free(docdir);
@@ -2373,6 +2380,7 @@ void show_ref(const char *name) {
   if(!fl_filename_isdir(docdir)) return; //just return if no .cppref dir
   snprintf(helpname, sizeof(helpname), "%s/%s", docdir, name);  
 #endif
+
   help_dialog->load(helpname);
   help_dialog->resize(help_dialog->x(),help_dialog->y(),760,540);
   help_dialog->show();
@@ -3083,8 +3091,17 @@ if (t==12){
 
 void home_cb(Fl_Widget* w, void*)
 {
+#if MSDOS
+    static char pwd_path[512];
+    getwd(pwd_path);
+	window->file_browser->load(pwd_path);
+    strcat(pwd_path,"/");
+	window->fb_label->value(strdup(pwd_path));
+
+#else     
 	window->fb_label->value(strdup((getenv("HOME")+string("/")).c_str()));
 	window->file_browser->load(getenv("HOME"));
+#endif	
 }
 
 
@@ -3611,7 +3628,16 @@ static int old_ins_mode, old_first_line, old_last_line;
 
 int main(int argc, char **argv) {
   Pixmap p, mask;
-//  Fl::scheme("OXY");
+
+#if MSDOS
+__djgpp_set_ctrl_c(0);
+//select the grad1 scheme - looks a bit like Win7
+setenv("FLTK_SCHEME","grad1",0); //do not replace existing
+//  Fl::scheme("grad1");
+#else
+  Fl::scheme("OXY");
+#endif
+
 
 //  fl_open_display();  
 //  XpmCreatePixmapFromData(fl_display, DefaultRootWindow(fl_display),fldevicon_xpm, &p, &mask, NULL);
@@ -3654,7 +3680,13 @@ int main(int argc, char **argv) {
 	//open file
 	if(r == 1) {
 		char buf[255];
+#if MSDOS
+        char pwd_buf[512];
+        getwd(pwd_buf);
+		sprintf(buf,"%s/%s",pwd_buf,filename_wo_path);
+#else		
 		sprintf(buf,"%s/%s",getenv("PWD"),filename_wo_path);
+#endif
 		add_recent_file_to_menu(buf);
 		window->hide_browser();
 	}

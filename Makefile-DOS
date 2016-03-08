@@ -1,17 +1,18 @@
 # Standard defines:
 
-CC	=	g++
-LD	=	g++
+CC	=	gpp
+LD	=	gpp
 CCOMP	=	gcc
 oDir	=	.
 Bin	=	.
-libDirs	=	-L/usr/local/lib
-incDirs	=	-I/usr/include
+libDirs	=	-L/djgpp/lib
+incDirs	=	-I/djgpp/include
 LD_FLAGS	=	
-LIBS	=	-lX11 -lXext -lXft -lXinerama -lfltk_images -lm -lfltk_forms -lfltk -lpng -lz -ljpeg -lutil
-C_FLAGS	=	-Os -Wno-write-strings
-SRCS	=	editor.cpp highlight.cpp extras.cpp build_tools.cpp My_Text_Display.cpp My_Text_Editor.cpp NavBrowser.cpp My_File_Browser.cpp debug.cpp proj_form.cpp pref_form.cpp proj_wiz_form.cpp
-EXOBJS	=	$(oDir)/editor.o $(oDir)/highlight.o $(oDir)/extras.o $(oDir)/build_tools.o $(oDir)/My_Text_Display.o $(oDir)/My_Text_Editor.o $(oDir)/NavBrowser.o $(oDir)/My_File_Browser.o $(oDir)/debug.o $(oDir)/proj_form.o $(oDir)/pref_form.o $(oDir)/proj_wiz_form.o 
+LIBS	=	-lfltk_images -lm -lfltk_forms -lfltk -lNX11 -lnano-X -lpng -lz -ljpeg -lfreetype
+C_FLAGS	=	-Os -Wno-write-strings -DUSE_NXLIB
+SRCS	=	editor.cpp highlight.cpp extras.cpp build_tools.cpp My_Text_Display.cpp My_Text_Editor.cpp NavBrowser.cpp My_File_Browser.cpp proj_form.cpp pref_form.cpp proj_wiz_form.cpp
+EXOBJS	=	$(oDir)/editor.o $(oDir)/highlight.o $(oDir)/extras.o $(oDir)/build_tools.o $(oDir)/My_Text_Display.o $(oDir)/My_Text_Editor.o $(oDir)/NavBrowser.o $(oDir)/My_File_Browser.o $(oDir)/proj_form.o $(oDir)/pref_form.o $(oDir)/proj_wiz_form.o 
+
 ALLOBJS	=	$(EXOBJS)
 ALLBIN	=	$(Bin)/fldev
 ALLTGT	=	$(Bin)/fldev

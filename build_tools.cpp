@@ -141,10 +141,17 @@ void generate_makefile_cb()
 		fprintf(ptr,"cleanall:\tcleanobjs cleanbin\n");
 
 		fprintf(ptr,"\n#@# Dependency rules follow -----------------------------\n");
-		fprintf(ptr,"$(Bin)/%s: $(EXOBJS)\n",	project.binfilename.c_str());
+
 #if MSDOS
+    if (project.Bin=="." || project.Bin=="") {
+		fprintf(ptr,"%s: $(EXOBJS)\n",	project.binfilename.c_str());
+		fprintf(ptr,"\t$(LD) $(LD_FLAGS) -o %s.exe $(EXOBJS) $(incDirs) $(libDirs) $(LIBS)\n",	project.binfilename.c_str());                    
+     } else {
+		fprintf(ptr,"$(Bin)/%s: $(EXOBJS)\n",	project.binfilename.c_str());
 		fprintf(ptr,"\t$(LD) $(LD_FLAGS) -o $(Bin)/%s.exe $(EXOBJS) $(incDirs) $(libDirs) $(LIBS)\n",	project.binfilename.c_str());
+    }
 #else		
+		fprintf(ptr,"$(Bin)/%s: $(EXOBJS)\n",	project.binfilename.c_str());
 		fprintf(ptr,"\t$(LD) $(LD_FLAGS) -o $(Bin)/%s $(EXOBJS) $(incDirs) $(libDirs) $(LIBS)\n",	project.binfilename.c_str());
 #endif
 		char *src_files = strdup(sourcefiles.c_str());
@@ -156,8 +163,15 @@ void generate_makefile_cb()
 
 			char *first = strsep(&fname,".");
 			char *ext = strsep(&fname,"\n");
-
+#if MSDOS
+     if (project.oDir=="." || project.oDir=="") {
+            fprintf(ptr,"\n%s.o: %s.%s %s\n",		first,first,ext,project.header_files.c_str());
+     } else {
+			fprintf(ptr,"\n$(oDir)/%s.o: %s.%s %s\n",		first,first,ext,project.header_files.c_str());            
+     }
+#else
 			fprintf(ptr,"\n$(oDir)/%s.o: %s.%s %s\n",		first,first,ext,project.header_files.c_str());
+#endif
 			//fprintf(ptr,"\n$(oDir)/%s.o: %s.%s %s Makefile\n",		first,first,ext,project.header_files.c_str());
 			fprintf(ptr,"\t$(CC) $(C_FLAGS) $(incDirs) -c -o $@ $<\n");
 			if(src_files == NULL || src_files == "") break;

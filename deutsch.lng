@@ -4,20 +4,20 @@ LANG:deutsch
 &File:&Datei
 E&xit:&Beenden
 &New File:&Neu
-&Open File...:&Öffnen...
-Open &Recent File:Neu öffnen
-&Insert File...:Datei e&infügen...
+&Open File...:&Ã–ffnen...
+Open &Recent File:Neu Ã¶ffnen
+&Insert File...:Datei e&infÃ¼gen...
 &Save File:&Speichern
 Save File &As...:Speichern &unter...
 &Edit:&Bearbeiten
-&Undo:&Rückgängig
+&Undo:&RÃ¼ckgÃ¤ngig
 Cu&t:A&usschneiden
 &Copy:&Kopieren
-&Paste:Einfügen
-&Delete:Löschen
+&Paste:EinfÃ¼gen
+&Delete:LÃ¶schen
 C&omment out:Ausk&ommentieren
-&Indent Selection:Auswahl einrücken
-U&nindent Selection:Auswahl ausrücken
+&Indent Selection:Auswahl einrÃ¼cken
+U&nindent Selection:Auswahl ausrÃ¼cken
 Pre&ferences...:Einstellungen...
 &View:Ansicht
 &Show Filebrowser:Zeige Dateibrowser
@@ -29,42 +29,42 @@ F&ind Again:&Weitersuchen
 Re&place Again:Nochmal ersetzen
 &Project:&Projekt
 &New Project:&Neu
-Open &Project:&Öffnen
+Open &Project:&Ã–ffnen
 Previous Pro&ject:&Vorheriges Projekt
 &Save Project:&Speichern
-&Run:Ausfüh&ren
+&Run:AusfÃ¼h&ren
 &Compile:&Kompilieren
-Make &and Run:Make &und Ausführen
+Make &and Run:Make &und AusfÃ¼hren
 &Generate Makefile:Erzeu&ge Makefile
 &Options...:&Optionen...
 &Tools:&Werkzeuge
 &Help:&Hilfe
 Fltk &Manual:Fltk &Handbuch
 &C / C++ Reference:&C / C++ Referenz
-&About...:&Über
+&About...:&Ãœber
 
 [Smart]
 New File:Neue Datei
-Open File:Datei öffnen
+Open File:Datei Ã¶ffnen
 Save File:Datei speichern
 Toggle File Browser:
 Copy:Kopieren
 Cut:Ausschneiden
-Paste:Einfügen
-Undo:Rückgängig
+Paste:EinfÃ¼gen
+Undo:RÃ¼ckgÃ¤ngig
 Search:Suchen
 Replace:Ersetzen
-Run:Ausführen
-Make and run:Make und Ausführen
+Run:AusfÃ¼hren
+Make and run:Make und AusfÃ¼hren
 
 [Main]
 Project:Projekt
 Browse Dir:Verzeichnis
 Output:Ausgabe
 File:Datei
-INSERT:EINFÜGEN
-OVERWRITE:ÜBERSCHREIBEN
-modified:geändert
+INSERT:EINFÃœGEN
+OVERWRITE:ÃœBERSCHREIBEN
+modified:geÃ¤ndert
 Cancel:Abbrechen
 Save:Speichern
 Discard:Verwerfen
@@ -77,9 +77,9 @@ Replace Next:Ersetzen
 0:Cpp-Referenz nicht gefunden!\nJetzt herunterladen?
 1:Die aktuelle Datei wurde nicht gespeichert.\nJetzt speichern?
 2:Das aktuelle Projekt wurde nicht gespeichert.\nJetzt speichern?
-3:Datei öffnen?
-4:Datei einfügen?
-5:Projekt öffnen
+3:Datei Ã¶ffnen?
+4:Datei einfÃ¼gen?
+5:Projekt Ã¶ffnen
 6:Makefile neu erzeugen?
 7:Datei speichern unter
 8:Suchen
@@ -87,8 +87,8 @@ Replace Next:Ersetzen
 10:Bitte starten sie FLDEV neu.
 11:Das Lesen der Datei ist fehlgeschlagen.
 12:Das Schreiben der Datei ist fehlgeschlagen.
-13:Das Programm wird bereits ausgeführt.
-14:Name der ausführbaren Datei nicht angegeben.\nÜberprüfen sie die Projekt-Optionen!
+13:Das Programm wird bereits ausgefÃ¼hrt.
+14:Name der ausfÃ¼hrbaren Datei nicht angegeben.\nÃœberprÃ¼fen sie die Projekt-Optionen!
 15:Keine Vorkommen von '%s' gefunden.
 16:Fehler beim Lesen der Konfigurationsdatei.
 17:Projekt-Datei nicht gefunden!
@@ -123,10 +123,10 @@ Path to FLTK Docs:FLTK Doc Verzeichnis:
 Load Language File:Sprachdatei laden
 Current Language:Aktuelle Sprache
 Restore Default:Standard wiederh.
-Text Size:Schriftgröße
+Text Size:SchriftgrÃ¶ÃŸe
 Highlight Colors:Highlight Farben
-Use Auto-Indent Option:Auto-Einrückung aktivieren
-Save Window Size On Exit:Fenstergröße speichern
+Use Auto-Indent Option:Auto-EinrÃ¼ckung aktivieren
+Save Window Size On Exit:FenstergrÃ¶ÃŸe speichern
 Auto-hide Output Window:Autom. Ausgabefenster verstecken
 Open previous project on startup:Letztes Projekt beim Start laden
 Plain Text:Normaler Text
@@ -135,7 +135,7 @@ Block Comments:Blockkommentar
 Strings:Zeichenketten
 Directives:Direktiven
 Types:Typen
-Keywords:Schlüsselworte
+Keywords:SchlÃ¼sselworte
 Characters:Zeichen
 Background:Hintergrund
 
@@ -146,7 +146,7 @@ Project Name:Projektname
 Target File Name:Zieldateiname
 Bin Directory:Bin-Verzeichnis
 Object Directory:Objekt-Verzeichnis
-Execute in Console:In Konsole ausführen
+Execute in Console:In Konsole ausfÃ¼hren
 Compiler and Linker:Compiler und Linker
 Libraries:Bibliotheken
 Library Dirs:Bibl. Verz.

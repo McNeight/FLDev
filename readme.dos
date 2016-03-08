@@ -1,0 +1,17 @@
+FlDev can edit any text file but for C/C++ development it is targeted
+to be used with djgpp. Therefore long file name support is required.
+
+You can edit a file with short file name support and then compile it
+with your favorite compiler by opening the shell window and run e.g.
+a batch file to compile. If this compiler does not require short file
+name support you do not need to load doslfn.
+
+If you select "run" from the menu the batch file "runindos.bat" will be
+called. You could modify that batch file to compile the program with any
+compiler instead.
+
+The cppreference has ".html" as the file ending and therefore can be
+used only with long file name support.
+
+
+23rd March 2014 Georg Potthast
