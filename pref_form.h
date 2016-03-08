@@ -8,6 +8,7 @@ extern int save_window_size;
 extern int auto_hide;
 #include <FL/Fl_Double_Window.H>
 extern Fl_Double_Window *pref_window;
+#include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 extern Fl_Button *pref_ok_btn;
 extern Fl_Button *pref_cancel_btn;

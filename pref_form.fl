@@ -15,8 +15,11 @@ Function {make_pref_form()} {open
 } {
   Fl_Window pref_window {
     label Preferences open selected
-    xywh {374 202 529 331} type Double align 5 modal visible
+    xywh {374 202 525 330} type Double align 5 modal visible
   } {
+    Fl_Box {} {
+      xywh {10 15 505 270} box ENGRAVED_BOX
+    }
     Fl_Button pref_ok_btn {
       label OK
       callback {text_size = text_size_choice->value() * 2 + 6;

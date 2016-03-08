@@ -4,7 +4,7 @@
 		
 		Lightweight Integrated Development Environment
 
-		version:	0.5.3
+		version:	0.5.4
 		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
@@ -85,7 +85,7 @@ using namespace std;
 
 class EditorWindow;
 
-int				rec_pr_menu_index = 44;
+int				rec_pr_menu_index = 45;
 int                bufchanged = 0;
 char               filename[256] = "";
 char               filename_wo_path[256] = "";
@@ -899,11 +899,8 @@ void xterm_cb(Fl_Widget* w, void* v) {
 
 void fluid_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
-  window->hide();
-  Fl::wait(5);
-  ptr = popen("fluid","r");
+  ptr = popen("fluid &","r");
   pclose(ptr);
-  window->show();
 }
 
 
@@ -1030,6 +1027,7 @@ void close_cb(Fl_Widget*, void* v) {
 }
 
 void quit_cb(Fl_Widget*, void*) {
+  if(Fl::event_key() == FL_Escape) return;
   if (bufchanged && !check_save())
     return;
   if(!check_project_save()) return;
@@ -1261,7 +1259,7 @@ void munindent_cb() {
 
 
 void about_cb() {
-	fl_message("FLDev IDE\nVersion 0.5.3\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
+	fl_message("FLDev IDE\nVersion 0.5.4\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
 }
 
 
@@ -1282,12 +1280,13 @@ Fl_Menu_Item menuitems[] = {
     { 0 },
 
   { "&Edit", 0, 0, 0, FL_SUBMENU },
+    { "&Undo",     FL_CTRL + 'z', (Fl_Callback *)undo_cb, 0, FL_MENU_DIVIDER },
     { "Cu&t",        FL_CTRL + 'x', (Fl_Callback *)cut_cb },
     { "&Copy",       FL_CTRL + 'c', (Fl_Callback *)copy_cb },
     { "&Paste",      FL_CTRL + 'v', (Fl_Callback *)paste_cb },
     { "&Delete",     0, (Fl_Callback *)delete_cb, 0, FL_MENU_DIVIDER },
     { "&Indent Selection", FL_CTRL + 'i', (Fl_Callback *)mindent_cb },
-    { "&Unindent Selection", FL_CTRL + FL_SHIFT + 'i', (Fl_Callback *)munindent_cb , 0, FL_MENU_DIVIDER},	//20
+    { "U&nindent Selection", FL_CTRL + FL_SHIFT + 'i', (Fl_Callback *)munindent_cb , 0, FL_MENU_DIVIDER},	//20
     { "Pre&ferences...",        0, (Fl_Callback *)pref_cb },
     { 0 },	
 
@@ -1476,11 +1475,11 @@ void show_browser_cb()
 {
 	if(window->tabs->Fl_Widget::visible()) {
 		window->hide_browser();
-		menuitems[24].clear();
+		menuitems[25].clear();
 	}
 	else {
 		window->show_browser();
-		menuitems[24].set();	
+		menuitems[25].set();	
 	}
 	
 	menubar->copy(menuitems, window);
@@ -1973,7 +1972,7 @@ Fl_Window* make_form() {
     w->begin();
 
     menubar = new Fl_Menu_Bar(0, 0, 660, 25);    
-	menuitems[24].set();
+	menuitems[25].set();
     menubar->copy(menuitems, w);
     menubar->box(FL_THIN_UP_BOX);
     menubar->down_box(FL_BORDER_BOX);
@@ -2217,7 +2216,7 @@ Fl_Window* make_form() {
 int main(int argc, char **argv) {
   Pixmap p, mask;
   fl_open_display();  
-  XpmCreatePixmapFromData(fl_display, DefaultRootWindow(fl_display),fldevicon_xpm, &p, &mask, 0);
+  XpmCreatePixmapFromData(fl_display, DefaultRootWindow(fl_display),fldevicon_xpm, &p, &mask, NULL);
   
   textbuf = new Fl_Text_Buffer;
   outputtb  = new Fl_Text_Buffer;
@@ -2226,6 +2225,13 @@ int main(int argc, char **argv) {
   window = (EditorWindow*)make_form();
   window->icon((char *)p);
   window->show(argc,argv);
+  
+  //Set Icon Mask for transparent Icon
+  XWMHints *hints = XGetWMHints(fl_display, fl_xid(window));
+  hints->icon_mask = mask;
+  hints->flags       |= IconMaskHint;// | IconPixmapHint;  
+  XSetWMHints(fl_display, fl_xid(window), hints);
+    
   file_hist = new File_History();
   text_size = 12;
   load_config_file();

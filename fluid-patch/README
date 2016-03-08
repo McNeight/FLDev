@@ -6,10 +6,16 @@ I recommend to disable "Show Completion Dialogs" in fluid GUI Settings.
 
 INSTALL:
 
+	There is a install-script, simply type 
+		
+		"sh install_patch".
+		
+	The script does:
+	
 		$ cp fluid_patch_fltk-1.1.4.diff /path/to/fltk-1.1.4/
 		$ cd /path/to/fltk-1.1.4
-		$ patch < fluid_patch_fltk-1.1.4.diff
+		$ patch -p0 < fluid_patch_fltk-1.1.4.diff
 		$ cd fluid
 		$ make
-
-as root:	$ make install
+		as root:	
+		$ make install

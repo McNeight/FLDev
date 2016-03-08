@@ -34,9 +34,12 @@ Fl_Check_Button *rec_pr_check=(Fl_Check_Button *)0;
 
 Fl_Double_Window* make_pref_form() {
   Fl_Double_Window* w;
-  { Fl_Double_Window* o = pref_window = new Fl_Double_Window(529, 331, "Preferences");
+  { Fl_Double_Window* o = pref_window = new Fl_Double_Window(525, 330, "Preferences");
     w = o;
     o->align(FL_ALIGN_TOP_LEFT);
+    { Fl_Box* o = new Fl_Box(10, 15, 505, 270);
+      o->box(FL_ENGRAVED_BOX);
+    }
     { Fl_Button* o = pref_ok_btn = new Fl_Button(345, 295, 85, 25, "OK");
       o->callback((Fl_Callback*)cb_pref_ok_btn);
     }
