@@ -46,14 +46,18 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <string>
 #include <ctype.h>
 #include <errno.h>
 #include <iostream>
 #include <deque>
-#ifndef _WIN32
+#ifdef _WIN32
+#include <io.h>
+#include <direct.h>
+#include <wchar.h>
+#else
+#include <unistd.h>
   #include <X11/xpm.h>
 #endif
 #include "icon_pixmaps.h"
@@ -122,6 +126,7 @@ deque <string> bakfiles;
 
 NavBrowser *navigator_browser;
 
+deque<Nav_entry> Nav_entry::children;
 
 Fl_Group *browser_file_grp, *browser_nav_grp;
 My_Group_wo_Nav *all_but_menu_grp;
@@ -243,9 +248,13 @@ deque <Nav_entry> unions;
 
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _WIN32
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
-/********************************************************************************************/
+ /********************************************************************************************/
 #ifdef WIN32
 #include <windows.h> /* GetModuleFileName */
 #endif /* WIN32 */
@@ -839,10 +848,10 @@ generate_makefile_cb();
    char *CurrWorkingDir = (char *)malloc(512);
    #ifdef MSDOS
       toggle_text_mode();
-      getcwd(CurrWorkingDir,512);
+      _getcwd(CurrWorkingDir,512);
    #else //WIN32
       //int err = get_app_path(CurrWorkingDir, PATH_MAX);
-      getcwd(CurrWorkingDir,512);
+      _getcwd(CurrWorkingDir,512);
    #endif   
 
 //   printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
@@ -1189,9 +1198,9 @@ void backupfile(char *newfile)
 	char absbuf[1000];
 	fl_filename_absolute(absbuf,1000,bf.c_str());
 	bakfiles.push_back(string(absbuf));
-	FILE *ptr = popen(buf,"r"); 
+	FILE *ptr = _popen(buf,"r"); 
 	if(ptr)
-  	pclose(ptr);
+  	_pclose(ptr);
   	free(filename);
   	free(cpfile);
 }
@@ -1203,9 +1212,9 @@ void removebackupfiles()
 	for(int i = 0; i < bakfiles.size(); i++)
 	{
 		sprintf(buf,"rm -rf %s &",bakfiles[i].c_str());
-		FILE *ptr = popen(buf,"r"); 
+		FILE *ptr = _popen(buf,"r"); 
 		if(ptr)
-	  	pclose(ptr);	
+	  	_pclose(ptr);	
 	  	cout << "Removed " << bakfiles[i] << endl;
 	}
 }
@@ -1362,7 +1371,7 @@ if(command == "") (strmsg[14].c_str());
    char *CurrWorkingDir = (char *)malloc(512);
   #ifdef MSDOS
     toggle_text_mode();
-    getcwd(CurrWorkingDir,512);
+    _getcwd(CurrWorkingDir,512);
   #else //WIN32
     int err = get_app_path(CurrWorkingDir, PATH_MAX);
   #endif   
@@ -1397,14 +1406,14 @@ if(command == "") (strmsg[14].c_str());
 	fclose(ptr); //add chmod +x here!
 	buf = "xterm -e sh fldevrun.sh &";
 #endif
-	ptr = popen(buf.c_str(),"r");
-	pclose(ptr);
+	ptr = _popen(buf.c_str(),"r");
+	_pclose(ptr);
   
   }  else { //if not in console mode
   
   	buf = command+" > /dev/null 2>&1 &";
-	ptr = popen(buf.c_str(),"r");
-	pclose(ptr);
+	ptr = _popen(buf.c_str(),"r");
+	_pclose(ptr);
   }
   exec_running = false;
 }
@@ -1417,7 +1426,7 @@ void xterm_cb(Fl_Widget* w, void* v) {
 #ifdef _WIN32
    char *CurrWorkingDir = (char *)malloc(512);
    //int err = get_app_path(CurrWorkingDir, PATH_MAX);
-   getcwd(CurrWorkingDir,512);
+   _getcwd(CurrWorkingDir,512);
    chdir(project.pr_dir.c_str());
    //printf("\n-> Please enter EXIT to return to FlDev <-\n\n"); 
    system("command.com");
@@ -1431,7 +1440,7 @@ void xterm_cb(Fl_Widget* w, void* v) {
   #ifdef MSDOS
    toggle_text_mode();
    char *CurrWorkingDir = (char *)malloc(512);
-   getcwd(CurrWorkingDir,512);
+   _getcwd(CurrWorkingDir,512);
 
    printf("\n-> Please enter EXIT to return to FlDev <-\n\n");       
    system("command.com");
@@ -1441,12 +1450,12 @@ void xterm_cb(Fl_Widget* w, void* v) {
    toggle_text_mode();
    return; //avoid pclose
   #else
-    ptr = popen("/usr/bin/deskapps/nxterm/nxterm &","r");
+    ptr = _popen("/usr/bin/deskapps/nxterm/nxterm &","r");
   #endif
 #else
-  ptr = popen("xterm &","r");
+  ptr = _popen("xterm &","r");
 #endif
-  pclose(ptr);
+  _pclose(ptr);
 }
 
 
@@ -1463,8 +1472,8 @@ void fluid_cb(Fl_Widget* w, void* v) {
   wprocess(projectdir,0);
   free(projectdir);
 #else  
-  ptr = popen("fluid &","r");
-  pclose(ptr);
+  ptr = _popen("fluid &","r");
+  _pclose(ptr);
 #endif
 
 }
@@ -1593,8 +1602,8 @@ void close_cb(Fl_Widget*, void* v) {
   delete w;
   num_windows--;
   save_config_file();
-  FILE *ptr = popen("rm -f fldevrun.sh","r");
-  pclose(ptr);
+  FILE *ptr = _popen("rm -f fldevrun.sh","r");
+  _pclose(ptr);
 
   exit(0);
 }*/
@@ -1605,8 +1614,8 @@ void quit_cb(Fl_Widget*, void*) {
     return;
   if(!check_project_save()) return;
   save_config_file();
-  FILE *ptr = popen("rm -f fldevrun.sh","r");
-  pclose(ptr);
+  FILE *ptr = _popen("rm -f fldevrun.sh","r");
+  _pclose(ptr);
   if(delbak) removebackupfiles();
 #ifdef MSDOS
   GrClose();
@@ -1747,8 +1756,8 @@ void make_(Fl_Widget* w, void* v, int mode) {
   ptr = fopen("makelog.mak","r"); //will be read below
   
 #elif _WIN32
-  //ptr = popen("rm errorlog.make 2> /dev/null","r"); 
-  //pclose(ptr);
+  //ptr = _popen("rm errorlog.make 2> /dev/null","r"); 
+  //_pclose(ptr);
 
   if(mode==2) //compile
   { 
@@ -1770,11 +1779,11 @@ void make_(Fl_Widget* w, void* v, int mode) {
   sprintf(buf,"%s/makelog.make",project.pr_dir.c_str());
   ptr = fopen(buf,"r"); //will be read below
   //ptr = fopen("makelog.make","r"); //will be read below
-  //ptr = popen(buf,"r");
+  //ptr = _popen(buf,"r");
 
 #else  //Linux
-  ptr = popen("rm errorlog.make 2> /dev/null","r"); 
-  pclose(ptr);
+  ptr = _popen("rm errorlog.make 2> /dev/null","r"); 
+  _pclose(ptr);
 
   if(mode==2) //compile
   { 
@@ -1791,7 +1800,7 @@ void make_(Fl_Widget* w, void* v, int mode) {
 
   else return;
 
-  ptr = popen(buf,"r");
+  ptr = _popen(buf,"r");
 #endif //MSDOS, _Win32, Linux
 
   op_stylebuf->remove(0,op_stylebuf->length());
@@ -1811,7 +1820,7 @@ void make_(Fl_Widget* w, void* v, int mode) {
 #if defined(MSDOS ) || defined(_WIN32)
   fclose(ptr);
 #else  
-  pclose(ptr);
+  _pclose(ptr);
 #endif
   outp="";
 //#endif //MSDOS
@@ -2441,8 +2450,8 @@ void pr_browser_cb(Fl_Widget* o, void*) {
 			char buf[255];
 			sprintf(buf,"fluid %s &",name);
 			FILE *ptr;
-			ptr = popen(buf,"r");
-			pclose(ptr);
+			ptr = _popen(buf,"r");
+			_pclose(ptr);
 			return;
 		}
 		else if (!check_save()) return;
@@ -2570,20 +2579,20 @@ done\n",homedir);
 		fclose(ptr);
 
 #ifdef USE_NXLIB
-        ptr = popen("/usr/bin/deskapps/nxterm/nxterm p.sh","r");
+        ptr = _popen("/usr/bin/deskapps/nxterm/nxterm p.sh","r");
 #else
-		ptr = popen("xterm -e sh p.sh","r");
+		ptr = _popen("xterm -e sh p.sh","r");
 #endif
-		pclose(ptr);
+		_pclose(ptr);
 
-		ptr = popen("rm -f cppreference-files.tar ","r");
-		pclose(ptr);
+		ptr = _popen("rm -f cppreference-files.tar ","r");
+		_pclose(ptr);
 
-		ptr = popen("rm -f p.sh ","r");
-		pclose(ptr);
+		ptr = _popen("rm -f p.sh ","r");
+		_pclose(ptr);
 /* 
-		ptr = popen("rm -rf html ","r");
-		pclose(ptr);
+		ptr = _popen("rm -rf html ","r");
+		_pclose(ptr);
 	*/	
 		return 1;
 	}
@@ -3020,7 +3029,7 @@ void load_lang_cb(char *file)
 	
 #if defined(MSDOS ) || defined(_WIN32)
 	if(file==NULL){
-		unlink("fldev.lng");
+		_unlink("fldev.lng");
 	} else {
 		sprintf(buf,"copy %s fldev.lng",file);
         system(buf);
@@ -3030,8 +3039,8 @@ void load_lang_cb(char *file)
 		sprintf(buf,"rm %s/.fldev_lng",homedir);
 	else
 		sprintf(buf,"cp %s %s/.fldev_lng",file,homedir);
-	FILE *ptr = popen(buf,"r");
-	pclose(ptr);
+	FILE *ptr = _popen(buf,"r");
+	_pclose(ptr);
 #endif
 	fl_message(strmsg[10].c_str());
 }
@@ -3350,7 +3359,7 @@ int err = get_app_path(pwd_path, PATH_MAX);
 void projdir_cb(Fl_Widget* w, void*)
 {
 	char cwd[255];
-	getcwd(cwd,255);
+	_getcwd(cwd,255);
 	window->fb_label->value(strdup((cwd+string("/")).c_str()));
 	window->file_browser->load(cwd);
 }
@@ -3716,7 +3725,7 @@ Fl_Window* make_form() {
 		o = new Fl_Group(0,w->tabs->y()+20,w->tabs->w(),w->tabs->h()-20,"Browse Dir");
 			//o->labeltype(FL_EMBOSSED_LABEL);
 			char buf[1024];
-			getcwd(buf,1024);
+			_getcwd(buf,1024);
 			
 			w->fb_label = new Fl_Output(o->x(),o->y()+browser_offset,o->w()-25,20);
 			w->fb_label->value( strdup( (buf+string("/")).c_str() ) );

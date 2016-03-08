@@ -91,7 +91,7 @@ class Nav_entry {
   	string args;
   	int pos;
   	int depth;
-  	deque <Nav_entry> children;
+  	static deque <Nav_entry> children;
 };
 
 class Class_stack_item {
