@@ -38,32 +38,33 @@ Fl_Double_Window* make_proj_wizard() {
   Fl_Double_Window* w;
   { Fl_Double_Window* o = proj_wiz = new Fl_Double_Window(503, 248, "New Project");
     w = o;
-    pr_dir_input = new Fl_Input(130, 65, 320, 25, "Project Directory:");
+    pr_dir_input = new Fl_Input(130, 65, 320, 25, "Project Directory");
     { Fl_Button* o = pr_wiz_browse_btn = new Fl_Button(450, 65, 35, 25, "...");
       o->callback((Fl_Callback*)cb_pr_wiz_browse_btn);
     }
-    pr_name_input = new Fl_Input(130, 25, 320, 25, "Project Name:");
+    pr_name_input = new Fl_Input(130, 25, 320, 25, "Project Name");
     { Fl_Button* o = pr_wiz_ok_btn = new Fl_Button(320, 205, 80, 25, "OK");
       o->callback((Fl_Callback*)cb_pr_wiz_ok_btn);
     }
     { Fl_Button* o = pr_wiz_cancel_btn = new Fl_Button(410, 205, 80, 25, "Cancel");
       o->callback((Fl_Callback*)cb_pr_wiz_cancel_btn);
     }
-    { Fl_Group* o = new Fl_Group(130, 100, 145, 50, "Type:");
+    { Fl_Group* o = new Fl_Group(130, 100, 185, 65, "Type");
       o->box(FL_THIN_UP_BOX);
-      o->align(FL_ALIGN_LEFT);
-      { Fl_Round_Button* o = x_app = new Fl_Round_Button(155, 125, 85, 25, "X11 App");
+      o->labeltype(FL_EMBOSSED_LABEL);
+      o->align(FL_ALIGN_TOP_LEFT|FL_ALIGN_INSIDE);
+      { Fl_Round_Button* o = x_app = new Fl_Round_Button(180, 135, 85, 20, "X11 App");
         o->type(102);
         o->down_box(FL_ROUND_DOWN_BOX);
       }
-      { Fl_Round_Button* o = con_app = new Fl_Round_Button(155, 100, 110, 25, "Console App");
+      { Fl_Round_Button* o = con_app = new Fl_Round_Button(180, 110, 110, 25, "Console App");
         o->type(102);
         o->down_box(FL_ROUND_DOWN_BOX);
         con_app->value(1);
       }
       o->end();
     }
-    { Fl_Check_Button* o = main_cpp_chk = new Fl_Check_Button(130, 165, 155, 25, "Generate \'main.cpp\'");
+    { Fl_Check_Button* o = main_cpp_chk = new Fl_Check_Button(130, 170, 155, 25, "Generate \'main.cpp\'");
       o->down_box(FL_DOWN_BOX);
     }
     o->set_modal();

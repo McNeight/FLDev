@@ -4,7 +4,7 @@
 		
 		Lightweight Integrated Development Environment
 
-		version:	0.5.5
+		version:	0.5.6
 		author:		Philipp Pracht
 		email:		pracht@informatik.uni-muenchen.de
 		 
@@ -29,7 +29,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////
 
 
-
+ 
 
 // TODO:
 /*
@@ -81,23 +81,25 @@
 #include "proj_wiz_form.h"
 #include "extras.h" 
 
-
+#define STR_MSG_SIZE 20
   
 using namespace std;
 
 class EditorWindow;
 
+
 int				rec_pr_menu_index = 45;
 int                bufchanged = 0;
 char               filename[256] = "";
 char               filename_wo_path[256] = "";
-char               title[256];  
+char               title[256], usrdocdir[256];  
 bool hidden = true, cppfile, filelistopen=false, make_error = false, exec_running = false;
 int linecount;
 int num_windows = 0;
 int loading = 0;
 
 
+//Editor colors
 Fl_Color hl_plain = FL_BLACK;
 Fl_Color hl_linecomment = FL_DARK_GREEN;
 Fl_Color hl_blockcomment = FL_DARK_GREEN;
@@ -116,6 +118,7 @@ File_History *file_hist;
 Fl_Menu_Bar* menubar;
 Fl_Help_Dialog *help_dialog;
 EditorWindow* window;
+Fl_Group *smartbar;
 
 void set_title(Fl_Window* w);
 void add_recent_file_to_menu(char *filename);
@@ -124,9 +127,55 @@ void save_config_file();
 void set_text_size(int t);
 int check_save();
 int load_file(char *,int);
+void replace_text_in_menu(int index, char *newtext);
 
 Fl_Window* make_form();
 
+
+//the strings that are translated
+
+
+//Main Mode
+string file_str="File", 
+		mod_str = "modified", 
+		insert_str = "INSERT", 
+		overwrite_str = "OVERWRITE",
+		row_str = "row",
+		col_str = "col",
+		cancel_str="Cancel", 
+	  	save_str="Save", 
+	  	discard_str="Discard";
+
+string strmsg[STR_MSG_SIZE];
+
+void init_strings()
+{    
+  strmsg[0]="Cpp-Reference not found!\nDo you want to download?";  
+  strmsg[1]="The current file has not been saved.\nWould you like to save it now?";
+  strmsg[2]="The current Project has not been saved.\nWould you like to save it now?";
+  strmsg[3]="Open File?";
+  strmsg[4]="Insert File?";
+  strmsg[5]="Open Project File";
+  strmsg[6]="Rebuild Makefile?";
+  strmsg[7]="Save File As?";
+  strmsg[8]="Search String";
+  strmsg[9]="Replaced %d occurrences.";
+  strmsg[10]="You have to restart FLDev!";  
+  strmsg[11]="Error reading from file";
+  strmsg[12]="Error writing to file";
+  strmsg[13]="Program already running!";
+  strmsg[14]="Name of executable file not defined.\nCheck project options!";
+  strmsg[15]="No occurrences of \'%s\' found!";
+  strmsg[16]="Error reading config file!";
+  strmsg[17]="Projekt File not found!";
+
+    
+} 
+
+string get_load_err_msg()
+{
+	return strmsg[17];
+}
 
 //callback functions
 void owbt_callback(Fl_Widget*, void*);
@@ -155,7 +204,6 @@ void generate_makefile_cb();
 Fl_Text_Buffer     *stylebuf = 0;
 Fl_Text_Buffer		*op_stylebuf = 0;
 
-
 #define TEXTSIZE 10
 
 Fl_Text_Display::Style_Table_Entry
@@ -175,8 +223,6 @@ My_Text_Display::Style_Table_Entry
 		     { hl_keyword,       FL_COURIER_BOLD,   TEXTSIZE }, // G - Keywords
 		     { hl_character,    FL_COURIER,        TEXTSIZE }  // H - Character
 		   };
-
-
 
 
 
@@ -475,9 +521,13 @@ style_update(	int        pos,		// I - Position of update
   } else {
     // Just delete characters in the style buffer...
     if((stylebuf->character(pos) == 'D') || (stylebuf->character(pos) == 'C')) stringdeleted = 1;
+    
     stylebuf->remove(pos, pos + nDeleted);
+    if(pos < 2) style_init();
   }
 
+	 
+	
   // Select the area that was just updated to avoid unnecessary
   // callbacks...
   stylebuf->select(pos, pos + nInserted - nDeleted);
@@ -515,7 +565,9 @@ style_update(	int        pos,		// I - Position of update
     style_parse(text, style, end - start);
 
     stylebuf->replace(start, end, style);
-    ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
+    //((Fl_Text_Editor *)cbArg)->redisplay_range(start, end);
+    
+	te->redraw();
   }
 
   free(text);
@@ -562,7 +614,7 @@ class My_Text_Editor2 : public Fl_Text_Editor {
 				if(buf == NULL) return 0;
 				int line;	
 
-				if(strcmp(t_filename,filename_wo_path) != 0) {
+				if(strcmp(t_filename,filename) != 0) {
 					if (!check_save()) return 0;
 
 					if(t_filename=="") return 0;
@@ -648,20 +700,20 @@ class EditorWindow : public Fl_Double_Window {
 
 
 EditorWindow::EditorWindow(int w, int h, const char* t) : Fl_Double_Window(w, h, t) {
-  replace_dlg = new Fl_Window(300, 105, "Replace");
-    replace_find = new Fl_Input(80, 10, 210, 25, "Find:");
+  replace_dlg = new Fl_Window(320, 105, "Replace");
+    replace_find = new Fl_Input(80, 10, 230, 25, "Find:");
     replace_find->align(FL_ALIGN_LEFT);
 
-    replace_with = new Fl_Input(80, 40, 210, 25, "Replace:");
+    replace_with = new Fl_Input(80, 40, 230, 25, "Replace:");
     replace_with->align(FL_ALIGN_LEFT);
 
-    replace_all = new Fl_Button(10, 70, 90, 25, "Replace All");
+    replace_all = new Fl_Button(5, 70, 95, 25, "Replace All");
     replace_all->callback((Fl_Callback *)replall_cb, this);
 
     replace_next = new Fl_Return_Button(105, 70, 120, 25, "Replace Next");
     replace_next->callback((Fl_Callback *)replace2_cb, this);
 
-    replace_cancel = new Fl_Button(230, 70, 60, 25, "Cancel");
+    replace_cancel = new Fl_Button(230, 70, 80, 25, "Cancel");
     replace_cancel->callback((Fl_Callback *)replcan_cb, this);
   replace_dlg->end();
   replace_dlg->set_non_modal();
@@ -682,6 +734,7 @@ void EditorWindow::draw() {
 }
 
  
+ //shows the compiler-output-widget at the bottom
 void EditorWindow::show_output()
 {
 	Fl_Text_Editor *o = output;
@@ -693,6 +746,7 @@ void EditorWindow::show_output()
 	Fl::check();
 }
 
+//hides the compiler-output-widget at the bottom
 void EditorWindow::hide_output()
 {
 	Fl_Text_Editor *o = output;
@@ -703,7 +757,7 @@ void EditorWindow::hide_output()
 }
  
 
- 
+//shows the project-/file-browser at the left
 void EditorWindow::show_browser()
 {
 	tabs->size(150,editor->h());
@@ -713,6 +767,7 @@ void EditorWindow::show_browser()
 	Fl::check();
 }
 
+//hides the project-/file-browser at the left
 void EditorWindow::hide_browser()
 {
 	editor->resize(0,editor->y(),w(),editor->h());
@@ -723,9 +778,8 @@ void EditorWindow::hide_browser()
 int check_save(void) {
   if (!bufchanged) return 1;
 
-  int r = fl_choice("The current file has not been saved.\n"
-                    "Would you like to save it now?",
-                    "Cancel", "Save", "Discard");
+  int r = fl_choice(strmsg[1].c_str(),
+                    cancel_str.c_str(), save_str.c_str(), discard_str.c_str());
 
   if (r == 1) {
     save_cb(); // Save the file...
@@ -740,10 +794,9 @@ int check_save(void) {
 int check_project_save(void) {
   if (!project.modified) return 1;
 
-  int r = fl_choice("The current Project has not been saved.\n"
-                    "Would you like to save it now?",
-                    "Cancel", "Save", "Discard");
-
+  int r = fl_choice(strmsg[2].c_str(),
+                    cancel_str.c_str(), save_str.c_str(), discard_str.c_str());
+                    
   if (r == 1) {
     project.save(); // Save the file...
     return !project.modified;
@@ -788,7 +841,7 @@ int  load_file(char *newfile, int ipos) {
   else r = textbuf->insertfile(newfile, ipos);
 
   if (r)
-    fl_alert("Error reading from file \'%s\':\n%s.", newfile, strerror(errno));
+    fl_alert("%s \'%s\':\n%s.", strmsg[11].c_str(), newfile, strerror(errno));
   else
     if (!insert) strcpy(filename, newfile);
   loading = 0;
@@ -801,12 +854,9 @@ int  load_file(char *newfile, int ipos) {
 }
 
 
-
-
-
 void save_file(char *newfile) {
   if (textbuf->savefile(newfile))
-    fl_alert("Error writing to file \'%s\':\n%s.", newfile, strerror(errno));
+    fl_alert("%s \'%s\':\n%s.", strmsg[12].c_str(),newfile, strerror(errno));
   else
     strcpy(filename, newfile);
   bufchanged = 0;
@@ -855,7 +905,7 @@ void delete_cb(Fl_Widget*, void*) {
 void find_cb(Fl_Widget* w, void* v) {
   EditorWindow* e = window;
   const char *val;
-  val = fl_input("Search String:", e->search);
+  val = fl_input((strmsg[8]+":").c_str(), e->search);
   if (val != NULL) {
     // User entered a string - go find it!
     strcpy(e->search, val);
@@ -868,20 +918,17 @@ void find_cb(Fl_Widget* w, void* v) {
 
 
 
-
-
-
 void run_cb(Fl_Widget* w, void* v) {
   FILE *ptr;
   string buf;
   string command;
   if(exec_running) {
-		fl_alert("Program already running!");
+		fl_alert(strmsg[13].c_str());
 		return;
   }
   exec_running = true;
   command = project.oDir + "/" + project.binfilename;
-  if(command == "") fl_alert("Name of executable file not defined.\nCheck project options!");
+  if(command == "") (strmsg[14].c_str());
 
   if(console_check->value()) {	
 	ptr = fopen("fldevrun.sh","w");
@@ -892,8 +939,8 @@ void run_cb(Fl_Widget* w, void* v) {
 	pclose(ptr);
   }
   else {
-  	buf = command+" &";
-	ptr = popen((buf + " >/dev/null 2>&1").c_str(),"r");
+  	buf = command+" > /dev/null 2>&1 &";
+	ptr = popen(buf.c_str(),"r");
 	 
 	pclose(ptr);
   }
@@ -934,8 +981,9 @@ void find2_cb(Fl_Widget* w, void* v) {
     e->editor->insert_position(pos+strlen(e->search));
     e->editor->show_insert_position();
   }
-  else fl_alert("No occurrences of \'%s\' found!", e->search);
+  else fl_alert(strmsg[15].c_str(), e->search);
 }
+
 
 
 
@@ -953,9 +1001,13 @@ void set_title(Fl_Window* w) {
     else strcpy(temp_title, filename);
   }
 
-  if (bufchanged) strcat(temp_title, " (modified)");
+  if (bufchanged) {
+  	strcat(temp_title, " (");
+  	strcat(temp_title, mod_str.c_str());
+  	strcat(temp_title, ")");
+  }
   if(!project.assigned) sprintf(title,"FLDev     %s",temp_title);
-  else sprintf(title,"FLDev  Project: %s  File: %s",project.name.c_str(),temp_title);
+  else sprintf(title,"FLDev  %s: %s  %s: %s",window->tabs->child(0)->label(),project.name.c_str(),file_str.c_str(),temp_title);
   sprintf(filename_wo_path,"%s",temp_title);
   ((EditorWindow *)w)->label(title);
 }
@@ -993,7 +1045,7 @@ void new_cb(Fl_Widget*, void*) {
 void open_cb(Fl_Widget*, void*) {
   if (!check_save()) return;
 
-  char *newfile = fl_file_chooser("Open File?", "[!.]*", filename);
+  char *newfile = fl_file_chooser(strmsg[3].c_str(), "[!.]*", filename);
   char path[511];
 
   if(newfile=="") return;
@@ -1008,12 +1060,11 @@ void open_cb(Fl_Widget*, void*) {
 	}
 }
 
-
-
+ 
 
 
 void insert_cb(Fl_Widget*, void *v) {
-  char *newfile = fl_file_chooser("Insert File?", "*", filename);
+  char *newfile = fl_file_chooser(strmsg[4].c_str(), "*", filename);
   EditorWindow *w = (EditorWindow *)v;
   if (newfile != NULL) load_file(newfile, w->editor->insert_position());
 }
@@ -1079,7 +1130,7 @@ void replace2_cb(Fl_Widget*, void* v) {
     e->editor->insert_position(pos+strlen(replace));
     e->editor->show_insert_position();
   }
-  else fl_alert("No occurrences of \'%s\' found!", find);
+  else fl_alert(strmsg[15].c_str(), find);
 }
 
 void replall_cb(Fl_Widget*, void* v) {
@@ -1115,8 +1166,8 @@ void replall_cb(Fl_Widget*, void* v) {
     }
   }
 
-  if (times) fl_message("Replaced %d occurrences.", times);
-  else fl_alert("No occurrences of \'%s\' found!", find);
+  if (times) fl_message(strmsg[9].c_str(), times);
+  else fl_alert(strmsg[15].c_str(), find);
 }
 
 void replcan_cb(Fl_Widget*, void* v) {
@@ -1136,7 +1187,7 @@ void save_cb() {
 
 void saveas_cb() {
   char *newfile;
-  newfile = fl_file_chooser("Save File As?", "*", filename);
+  newfile = fl_file_chooser(strmsg[7].c_str(), "*", filename);
   if (newfile != NULL) {
 	save_file(newfile);
 	set_title(window);
@@ -1245,6 +1296,8 @@ void theme_none_cb()
 }
 
 
+
+
 void mindent_cb() {
 	int firstlinepos,actuallinepos;
 	te->buffer()->selection_position(&firstlinepos,&actuallinepos);
@@ -1271,8 +1324,13 @@ void munindent_cb() {
 
 
 void about_cb() {
-	fl_message("FLDev IDE\nVersion 0.5.5\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
+	fl_message("FLDev IDE\nVersion 0.5.6\n\nCopyright (C) 2005 by Philipp Pracht\n\nThis program is free software; you can redistribute it and/or\nmodify it under the terms of the GNU General Public License\nas published by the Free Software Foundation; either version 2\nof the License, or (at your option) any later version.\n\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\n\nYou should have received a copy of the GNU General Public License\nalong with this program; if not, write to the Free Software\nFoundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.\n");
 }
+
+
+
+
+
 
 
 Fl_Menu_Item menuitems[] = {
@@ -1351,6 +1409,16 @@ Fl_Menu_Item menuitems[] = {
 };
 
 
+
+
+
+
+
+
+
+
+
+
 void owbt_callback(Fl_Widget*, void*) {
 	if(!window->output->visible()) window->show_output();
 	else window->hide_output();
@@ -1377,17 +1445,20 @@ void pr_opt_cb(Fl_Widget*, void*) {
 		project.src_files = psrc->value();
 	 	project.header_files = phdr->value();
 
-		if(pr_changed == 1) if(fl_ask("Rebuild Makefile?")) generate_makefile_cb();
+		if(pr_changed == 1) if(fl_ask(strmsg[6].c_str())) generate_makefile_cb();
 		project.addToBrowser(window->pr_browser);
 		project.modified=true;
 	}
 }
 
 
+
+
+
 void open_pr_cb() {
   if (!check_save()) return;
   if(!check_project_save()) return;
-  char *newfile = fl_file_chooser("Open Project File", "*.fldev","");
+  char *newfile = fl_file_chooser(strmsg[5].c_str(), "*.fldev","");
 	if(newfile==NULL) return;
   project.pr_filename = newfile;
   project.load();
@@ -1407,6 +1478,7 @@ void open_pr_cb() {
   add_recent_project_to_menu(newfile);
   menubar->copy(menuitems, window);
 }
+
 
 
 void save_pr_cb() {
@@ -1440,7 +1512,7 @@ void new_pr_cb() {
   project.Bin = ".";
 
   if(x_app->value()) {
-  	project.libs = "-lX11";
+  	project.libs = "-lX11 -lfltk";
   	project.libdirs = "-L/usr/X11R6/lib";
   	project.incdirs = "-I/usr/X11R6/include";
 	project.run_in_console = false;
@@ -1654,7 +1726,6 @@ void file_browser_cb(Fl_Widget* o, void*) {
 
 
 
-
 void show_help(const char *name) {
   const char	*docdir;
   char		helpname[1024];
@@ -1662,8 +1733,9 @@ void show_help(const char *name) {
   if (!help_dialog) help_dialog = new Fl_Help_Dialog();
 
   if ((docdir = getenv("FLTK_DOCDIR")) == NULL) {
-
-    docdir = "/usr/local/share/doc/fltk";
+	if(strlen(usrdocdir) == 0)
+    	docdir = "/usr/local/share/doc/fltk";
+    else docdir = strdup(usrdocdir);
   }
   snprintf(helpname, sizeof(helpname), "%s/%s", docdir, name);  
 
@@ -1676,7 +1748,7 @@ void show_help(const char *name) {
 int ask_for_download()
 {
 	char *homedir = getenv("HOME");
-	if(!fl_ask("Cpp-Reference not found!\nDo you want to download?")) return 0;
+	if(!fl_ask(strmsg[0].c_str())) return 0;
 	else {
 		Fl::wait(5);
 		FILE *ptr;
@@ -1688,12 +1760,21 @@ int ask_for_download()
 "wget http://www.cppreference.com/cppreference-files.tar.gz\n \
 gunzip cppreference-files.tar.gz\n \
 tar -xf cppreference-files.tar\n \
+mv www.cppreference.com %s/.cppref\n",homedir);
+
+/*
+fprintf(ptr, \
+"wget http://www.cppreference.com/cppreference-files.tar.gz\n \
+gunzip cppreference-files.tar.gz\n \
+tar -xf cppreference-files.tar\n \
 cp -ra html %s/.cppref\n \
 cd html \n \
 for file in $(find . -name '*.html') \n \
 do \n\
 	echo \"Processing $file\"\nperl -p -e 's/href=\"\\//href=\"file:\\/\\/$ENV{HOME}\\/.cppref\\//g;s/\\/\"/\\/index.html\"/g' $file > tmp.txt\nmv tmp.txt $HOME/.cppref/$file \n \
 done\n",homedir);
+
+*/
 		fclose(ptr);
 
 		ptr = popen("xterm -e sh p.sh","r");
@@ -1704,10 +1785,10 @@ done\n",homedir);
 
 		ptr = popen("rm -f p.sh ","r");
 		pclose(ptr);
-
+/* 
 		ptr = popen("rm -rf html ","r");
 		pclose(ptr);
-		
+	*/	
 		return 1;
 	}
 }
@@ -1745,6 +1826,7 @@ void ref_cb(Fl_Widget *, void *) {
 
 void load_config_file()
 {
+	//cout << "Loading config file\t";
 	char buf[255],file1[255],file2[255],file3[255],file4[255], pr1[255], pr2[255], pr3[255], pr4[255],scheme[255];
 	memset(file1,'\0',255); memset(file2,'\0',255); memset(file3,'\0',255); memset(file4,'\0',255);
 	int x,y,w,h,sm_in,rp_al;
@@ -1754,7 +1836,7 @@ void load_config_file()
 	FILE *ptr = fopen(buf,"r");
 
 	if(ptr != NULL) {
-		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n",
+		if(fscanf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n",
 					&save_window_size,
 					&x,
 					&y,
@@ -1781,7 +1863,8 @@ void load_config_file()
 					&hl_type,
 					&hl_keyword,
 					&hl_character,
-					&background_color )) {
+					&background_color,
+					&usrdocdir )) {
 			if(strlen(file4)>3) add_recent_file_to_menu(file4+3);
 			if(strlen(file3)>3) add_recent_file_to_menu(file3+3);
 			if(strlen(file2)>3) add_recent_file_to_menu(file2+3);
@@ -1791,19 +1874,326 @@ void load_config_file()
 			if(strlen(pr2)>3) add_recent_project_to_menu(pr2+3);
 			if(strlen(pr1)>3) add_recent_project_to_menu(pr1+3);
 			
+			if(strlen(usrdocdir)>0) usrdoc_input->value(usrdocdir);
+			else usrdoc_input->value("/usr/local/share/doc/fltk");
+			
 			Fl::scheme(scheme);
 			if(save_window_size) window->resize(x,y,w,h);
 			te->smart_indent = sm_in;
 			smart_indent_check->value(sm_in!=0);
 			rec_pr_check->value(rp_al!=0);
 		}
-		else fl_alert("Error reading config file!");
+		else fl_alert(strmsg[16].c_str());
+  		fclose(ptr);
+	}
+	//cout << "Done." << endl;
+
+}
+
+
+
+
+void load_language_file()
+{
+	char buf[255],line[255];
+	int mode=0;
+	char *homedir = getenv("HOME");
+	sprintf(buf,"%s/.fldev_lng",homedir);
+	FILE *ptr = fopen(buf,"r");
+
+	char *lineorig, *linetrans;
+	
+	
+	if(ptr != NULL) {
+	
+		while(fgets(line, 255, ptr ))
+		{
+			line[strlen(line)-1]='\0';
+			
+			if(line[0]=='[')
+			{
+				if(strncmp(line,"[Menu]",6)==0) mode = 1;
+				if(strncmp(line,"[Main]",6)==0) mode = 2;
+				if(strncmp(line,"[Smart]",7)==0) mode = 3;
+				if(strncmp(line,"[Pref]",6)==0) mode = 4;
+				if(strncmp(line,"[Opt]",5)==0) mode = 5;
+				if(strncmp(line,"[Wiz]",5)==0) mode = 6;				
+				if(strncmp(line,"[Msg]",5)==0) mode = 7;
+			}
+		
+			else
+			{
+				lineorig = strtok(line,":");
+				if(lineorig==NULL) continue;
+				linetrans = strtok(NULL,":");
+				if(linetrans==NULL) continue;
+				
+				if(mode==0)
+				{
+					if(strcmp(lineorig,"LANG")==0)
+					{
+						cur_lang_output->value(strdup(linetrans));
+						//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+					}
+				}
+				else if(mode==1) //Menu mode
+				{
+					for(int i = 0; i < sizeof(menuitems)/sizeof(menuitems[0]); i++)
+					{
+						//printf( "Mode %d, orig \"%s\", trans \"%s\"\n", mode, menuitems[i].label(), linetrans);					
+						
+						if(menuitems[i].label()==0) continue;
+						
+						if(strcmp(menuitems[i].label(),lineorig)==0)
+						{
+							replace_text_in_menu(i, linetrans);
+							//menuitems[i].text = linetrans;
+							//printf( "Mode %d, orig %s, trans %s\n", mode, menuitems[i].label(), linetrans);
+						}
+					}
+				}	
+				else if(mode==2) //Main mode
+				{
+					if(strncmp(lineorig,"Project",7)==0) 
+					{
+						window->tabs->child(0)->label(strdup(linetrans));
+					}
+					else if(strncmp(lineorig,"Browse Dir",10)==0) 
+					{
+						window->tabs->child(1)->label(strdup(linetrans));
+					}	
+					else if(strncmp(lineorig,"Output",6)==0) 
+					{
+						window->outputwindowbutton->label(strdup(linetrans));
+					}	
+					else if(strncmp(lineorig,"INSERT",6)==0) 
+					{
+						insert_str = strdup(linetrans);
+					}	
+					else if(strncmp(lineorig,"OVERWRITE",9)==0) 
+					{
+						overwrite_str = strdup(linetrans);
+					}
+					else if(strncmp(lineorig,"File",4)==0) 
+					{
+						file_str = strdup(linetrans);
+					}	
+					else if(strncmp(lineorig,"modified",8)==0) 
+					{
+						mod_str = strdup(linetrans);
+					}		
+					else if(strncmp(lineorig,"row",3)==0) 
+					{
+						row_str = strdup(linetrans);
+					}	
+					else if(strncmp(lineorig,"col",3)==0) 
+					{
+						col_str = strdup(linetrans);
+					}	
+					else if(strncmp(lineorig,"Save",4)==0) 
+					{
+						save_str = strdup(linetrans);
+					}	
+					else if(strncmp(lineorig,"Discard",7)==0) 
+					{
+						discard_str = strdup(linetrans);
+					}
+					else if(strncmp(lineorig,"Cancel",6)==0) 
+					{
+						cancel_str = strdup(linetrans);
+						window->replace_cancel->label(strdup(linetrans));
+					}					
+					else if(strncmp(lineorig,"Replace All",11)==0) 
+					{
+						window->replace_all->label(strdup(linetrans));
+					}
+					else if(strncmp(lineorig,"Find",4)==0) 
+					{
+						char buf[64];
+						sprintf(buf,"%s:",strdup(linetrans));
+						window->replace_find->label(strdup(buf));
+					}		
+					else if(strncmp(lineorig,"Replace Next",12)==0) 
+					{
+						window->replace_next->label(strdup(linetrans));
+					}
+					else if(strncmp(lineorig,"Replace",7)==0) 
+					{
+						char buf[64];
+						sprintf(buf,"%s:",strdup(linetrans));
+						window->replace_dlg->label(strdup(linetrans));
+						window->replace_with->label(strdup(buf));
+					}	
+				}
+				else if(mode==3) //Smartbar mode
+				{
+					for(int i = 0; i < smartbar->children(); i++)
+					{
+						if(smartbar->child(i)->tooltip()==NULL) continue;
+						if(strcmp(smartbar->child(i)->tooltip(),lineorig)==0) 
+						{
+							smartbar->child(i)->tooltip(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}				
+				}
+				else if(mode==4) //Preferences mode
+				{
+					//cout << "Children:" << 	pref_window->children()	<< endl;	
+					if(strcmp(pref_window->label(),lineorig)==0) 
+					{
+						pref_window->label(strdup(linetrans));
+						//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+					}
+					
+					for(int i=0; i < pref_window->children(); i++)
+					{
+						if(pref_window->child(i)->label()==NULL) continue;
+						if(strcmp(pref_window->child(i)->label(),lineorig)==0) 
+						{
+							pref_window->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					
+					for(int i=0; i < pref_tabs->children(); i++)
+					{
+						if(pref_tabs->child(i)->label()==NULL) continue;
+						if(strcmp(pref_tabs->child(i)->label(),lineorig)==0) 
+						{
+							pref_tabs->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < ed_group->children(); i++)
+					{
+						if(ed_group->child(i)->label()==NULL) continue;
+						if(strcmp(ed_group->child(i)->label(),lineorig)==0) 
+						{
+							ed_group->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < env_group->children(); i++)
+					{
+						if(env_group->child(i)->label()==NULL) continue;
+						if(strcmp(env_group->child(i)->label(),lineorig)==0) 
+						{
+							env_group->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					
+					
+				}
+				else if(mode==5) //Options mode
+				{
+					if(strcmp(project_options_window->label(),lineorig)==0) 
+					{
+						project_options_window->label(strdup(linetrans));
+						//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+					}
+					
+					for(int i=0; i < project_options_window->children(); i++)
+					{
+						if(project_options_window->child(i)->label()==NULL) continue;
+						if(strcmp(project_options_window->child(i)->label(),lineorig)==0) 
+						{
+							project_options_window->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < pr_op_tabs->children(); i++)
+					{
+						if(pr_op_tabs->child(i)->label()==NULL) continue;
+						if(strcmp(pr_op_tabs->child(i)->label(),lineorig)==0) 
+						{
+							pr_op_tabs->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < pr_op_pr_grp->children(); i++)
+					{
+						if(pr_op_pr_grp->child(i)->label()==NULL) continue;
+						if(strcmp(pr_op_pr_grp->child(i)->label(),lineorig)==0) 
+						{
+							pr_op_pr_grp->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < pr_op_cl_grp->children(); i++)
+					{
+						if(pr_op_cl_grp->child(i)->label()==NULL) continue;
+						if(strcmp(pr_op_cl_grp->child(i)->label(),lineorig)==0) 
+						{
+							pr_op_cl_grp->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+					for(int i=0; i < pr_op_fi_grp->children(); i++)
+					{
+						if(pr_op_fi_grp->child(i)->label()==NULL) continue;
+						if(strcmp(pr_op_fi_grp->child(i)->label(),lineorig)==0) 
+						{
+							pr_op_fi_grp->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}			
+				}
+				else if(mode==6) //Wizard mode
+				{
+					if(strcmp(proj_wiz->label(),lineorig)==0) 
+					{
+						proj_wiz->label(strdup(linetrans));
+						//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+					}
+					
+					for(int i=0; i < proj_wiz->children(); i++)
+					{
+						if(proj_wiz->child(i)->label()==NULL) continue;
+						if(strcmp(proj_wiz->child(i)->label(),lineorig)==0) 
+						{
+							proj_wiz->child(i)->label(strdup(linetrans));
+							//printf( "Mode %d, orig %s, trans %s\n", mode, lineorig, linetrans);
+						}
+					}
+									
+				}
+				else if(mode==7) //Message mode
+				{
+					int nr;
+					if(!sscanf(lineorig,"%d",&nr)) continue;
+					char *nl = strstr(linetrans,"\\n");
+					if(nl) {
+						*nl = ' ';
+						*(nl+1) = '\n';
+					}
+					if(nr < STR_MSG_SIZE) strmsg[nr]=strdup(linetrans);
+				}
+				
+			}
+		}
+		menubar->copy(menuitems, window);
   		fclose(ptr);
 	}
 
 }
 
 
+
+void load_lang_cb(char *file)
+{
+	char *homedir = getenv("HOME");
+	char buf[255];
+	
+	if(file==NULL)
+		sprintf(buf,"rm %s/.fldev_lng",homedir);
+	else
+		sprintf(buf,"cp %s %s/.fldev_lng",file,homedir);
+	FILE *ptr = popen(buf,"r");
+	pclose(ptr);
+	fl_message(strmsg[10].c_str());
+}
 
 
 
@@ -1819,7 +2209,7 @@ void save_config_file()
 
 	if(ptr != NULL) 
 	{
-		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
+		fprintf(ptr,"%d %d %d %d %d\n%d\n%d\n%s\nf1:%s\nf2:%s\nf3:%s\nf4:%s\np1:%s\np2:%s\np3:%s\np4:%s\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%d\n%s\n", save_window_size,window->x(),window->y(),window->w(),window->h(),auto_hide,text_size,Fl::scheme(),
 				menuitems[4].label(),menuitems[5].label(),menuitems[6].label(),menuitems[7].label(),
 				menuitems[startitem+4].label(),menuitems[startitem+5].label(),menuitems[startitem+6].label(),menuitems[startitem+7].label(),te->smart_indent,rec_pr_check->value(),
 				hl_plain,
@@ -1830,7 +2220,8 @@ void save_config_file()
 				hl_type,
 				hl_keyword,
 				hl_character,
-				background_color);
+				background_color,
+				usrdocdir);
 		fclose(ptr);
 	}
 
@@ -1992,6 +2383,25 @@ void add_recent_file_to_menu(char *filename)
 
 
 
+
+
+
+void replace_text_in_menu(int index, char *newtext)
+{	
+	Fl_Menu_Item mi = { strdup(newtext),
+						menuitems[index].shortcut_, 
+						menuitems[index].callback_ ,
+						menuitems[index].user_data_ ,
+						menuitems[index].flags ,
+						};
+    menuitems[index] = mi;	
+}
+
+
+
+
+
+
 void set_text_size(int t)
 {
 //Fl_Color hl_plain, hl_linecomment, hl_blockcomment, hl_string, hl_directive, hl_type, hl_keyword, hl_character¸background_color;
@@ -2070,7 +2480,7 @@ Fl_Window* make_form() {
 	
 	/////////////////////////////////////////////////////////////////////
 	//SmartIcons
-	Fl_Group *smartbar = new Fl_Group(0,25,660,25);
+	smartbar = new Fl_Group(0,25,660,25);
 	smartbar->box(FL_THIN_UP_BOX);
 	int temp_space = 0, ts_size = 10;
 	smartbar->begin();
@@ -2306,6 +2716,9 @@ Fl_Window* make_form() {
 
 
 
+
+
+
 int main(int argc, char **argv) {
   Pixmap p, mask;
   fl_open_display();  
@@ -2326,10 +2739,16 @@ int main(int argc, char **argv) {
   hints->flags       |= IconMaskHint;// | IconPixmapHint;  
   XSetWMHints(fl_display, fl_xid(window), hints);
     
+  init_strings();
+  
   file_hist = new File_History();
   text_size = 12;
   load_config_file();
 
+  //cout << "Loading language file\t";
+  load_language_file();
+  //cout << "Done."<<endl;
+  
   int r;
   if (argc > 1) {
  	r=load_file(argv[1], -1);
@@ -2351,7 +2770,7 @@ int main(int argc, char **argv) {
 		recent_project_cb(0,(void*)menuitems[rec_pr_menu_index-4].label());
   }
   else window->label("FLDev");
-  
+
   set_text_size(text_size);
 
   int oldzeile = -1, oldspalte = -1;
@@ -2362,6 +2781,7 @@ int main(int argc, char **argv) {
   }
 
   int old_ins_mode;
+  
   
   while(1)
   {
@@ -2374,8 +2794,8 @@ int main(int argc, char **argv) {
         if(zeile != oldzeile || spalte != oldspalte || ins_mode != old_ins_mode)
 		{
 			int gz = window->editor->count_lines(0,textbuf->length(),0)+1;
-			if(ins_mode) sprintf(b,"row %d (%d), col %d \tINSERT",zeile, gz, spalte);
-			else sprintf(b,"row %d (%d), col %d \tOVERWRITE",zeile, gz, spalte);
+			if(ins_mode) sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, insert_str.c_str());
+			else sprintf(b,"%s %d (%d), %s %d \t%s",row_str.c_str() ,zeile, gz, col_str.c_str(), spalte, overwrite_str.c_str());
   			window->statusbar->label(b);
 			oldzeile = zeile;
 			oldspalte = spalte;

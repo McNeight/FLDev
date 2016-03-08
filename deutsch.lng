@@ -1,0 +1,202 @@
+LANG:deutsch
+
+[Menu]
+&File:&Datei
+E&xit:&Beenden
+&New File:&Neu
+&Open File...:&Öffnen...
+Open &Recent File:Neu öffnen
+&Insert File...:Datei e&infügen...
+&Save File:&Speichern
+Save File &As...:Speichern &unter...
+&Edit:&Bearbeiten
+&Undo:&Rückgängig
+Cu&t:A&usschneiden
+&Copy:&Kopieren
+&Paste:Einfügen
+&Delete:Löschen
+&Indent Selection:Auswahl einrücken
+U&nindent Selection:Auswahl ausrücken
+Pre&ferences...:Einstellungen...
+&View:Ansicht
+&Show Filebrowser:Zeige Dateibrowser
+&None:&Normal
+&Search:&Suchen
+&Find...:&Suchen...
+F&ind Again:&Weitersuchen
+&Replace...:&Ersetzen...
+Re&place Again:Nochmal ersetzen
+&Project:&Projekt
+&New Project:&Neu
+Open &Project:&Öffnen
+Previous Pro&ject:&Vorheriges Projekt
+&Save Project:&Speichern
+&Run:Ausfüh&ren
+&Compile:&Kompilieren
+Make &and Run:Make &und Ausführen
+&Generate Makefile:Erzeu&ge Makefile
+&Options...:&Optionen...
+&Tools:&Werkzeuge
+&Help:&Hilfe
+Fltk &Manual:Fltk &Handbuch
+&C / C++ Reference:&C / C++ Referenz
+&About...:&Über
+
+[Smart]
+New File:Neue Datei
+Open File:Datei öffnen
+Save File:Datei speichern
+Toggle File Browser:
+Copy:Kopieren
+Cut:Ausschneiden
+Paste:Einfügen
+Undo:Rückgängig
+Search:Suchen
+Replace:Ersetzen
+Run:Ausführen
+Make and run:Make und Ausführen
+
+[Main]
+Project:Projekt
+Browse Dir:Verzeichnis
+Output:Ausgabe
+File:Datei
+INSERT:EINFÜGEN
+OVERWRITE:ÜBERSCHREIBEN
+modified:geändert
+Cancel:Abbrechen
+Save:Speichern
+Discard:Verwerfen
+Replace:Ersetzen
+Find:Suchen
+Replace All:Alles ersetzen
+Replace Next:Ersetzen
+
+[Msg]
+0:Cpp-Referenz nicht gefunden!\nJetzt herunterladen?
+1:Die aktuelle Datei wurde nicht gespeichert.\nJetzt speichern?
+2:Das aktuelle Projekt wurde nicht gespeichert.\nJetzt speichern?
+3:Datei öffnen?
+4:Datei einfügen?
+5:Projekt öffnen
+6:Makefile neu erzeugen?
+7:Datei speichern unter
+8:Suchen
+9:%d Vorkommen ersetzt.
+10:Bitte starten sie FLDEV neu.
+11:Das Lesen der Datei ist fehlgeschlagen.
+12:Das Schreiben der Datei ist fehlgeschlagen.
+13:Das Programm wird bereits ausgeführt.
+14:Name der ausführbaren Datei nicht angegeben.\nÜberprüfen sie die Projekt-Optionen!
+15:Keine Vorkommen von \'%s\' gefunden.
+16:Fehler beim Lesen der Konfigurationsdatei.
+17:Projekt-Datei nicht gefunden!
+
+#original messages
+strmsg[0]="Cpp-Reference not found!\nDo you want to download?";
+strmsg[1]="The current file has not been saved.\nWould you like to save it now?";
+strmsg[2]="The current Project has not been saved.\nWould you like to save it now?";
+strmsg[3]="Open File?";
+strmsg[4]="Insert File?";
+strmsg[5]="Open Project File";
+strmsg[6]="Rebuild Makefile?";
+strmsg[7]="Save File As?";
+strmsg[8]="Search String";
+strmsg[9]="Replaced %d occurrences.";
+strmsg[10]="You have to restart FLDev!";  
+strmsg[11]="Error reading from file";
+strmsg[12]="Error writing to file";
+strmsg[13]="Program already running!";
+strmsg[14]="Name of executable file not defined.\nCheck project options!";
+strmsg[15]="No occurrences of \'%s\' found!";
+strmsg[16]="Error reading config file!";
+strmsg[17]="Projekt File not found!";
+
+[Pref]
+Preferences:Einstellungen
+Cancel:Abbrechen
+Environment:Umgebung
+Path to FLTK Docs:FLTK Doc Verzeichnis:
+Load Language File:Sprachdatei laden
+Current Language:Aktuelle Sprache
+Restore Default:Standard wiederh.
+Text Size:Schriftgröße
+Highlight Colors:Highlight Farben
+Use Auto-Indent Option:Auto-Einrückung aktivieren
+Save Window Size On Exit:Fenstergröße speichern
+Auto-hide Output Window:Autom. Ausgabefenster verstecken
+Open previous project on startup:Letztes Projekt beim Start laden
+Plain Text:Normaler Text
+Line Comments:Zeilenkommentar
+Block Comments:Blockkommentar
+Strings:Zeichenketten
+Directives:Direktiven
+Types:Typen
+Keywords:Schlüsselworte
+Characters:Zeichen
+Background:Hintergrund
+
+[Opt]
+Project Options:Projekt Optionen
+Project:Projekt
+Project Name:Projektname
+Target File Name:Zieldateiname
+Bin Directory:Bin-Verzeichnis
+Object Directory:Objekt-Verzeichnis
+Execute in Console:In Konsole ausführen
+Compiler and Linker:Compiler und Linker
+Libraries:Bibliotheken
+Library Dirs:Bibl. Verz.
+Include Dirs:Include Verz.
+Files:Dateien
+Sources:Quelldateien
+Headers:Headerdateien
+Cancel:Abbrechen
+
+[Wiz]
+New Project:Neues Projekt
+Project Directory:Projekt Verzeichnis
+Project Name:Projektname
+Cancel:Abbrechen
+Type:Typ
+Generate 'main.cpp':Erzeuge 'main.cpp'
+
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                                                                               
+~                   

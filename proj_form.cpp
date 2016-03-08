@@ -5,6 +5,10 @@ int pr_changed;
 
 Fl_Double_Window *project_options_window=(Fl_Double_Window *)0;
 
+Fl_Tabs *pr_op_tabs=(Fl_Tabs *)0;
+
+Fl_Group *pr_op_pr_grp=(Fl_Group *)0;
+
 Fl_Input *pname=(Fl_Input *)0;
 
 static void cb_pname(Fl_Input*, void*) {
@@ -34,6 +38,8 @@ Fl_Check_Button *console_check=(Fl_Check_Button *)0;
 static void cb_console_check(Fl_Check_Button*, void*) {
   if(pr_changed == 0) pr_changed = 2;
 }
+
+Fl_Group *pr_op_cl_grp=(Fl_Group *)0;
 
 Fl_Input *plib=(Fl_Input *)0;
 
@@ -65,6 +71,8 @@ static void cb_pldflags(Fl_Input*, void*) {
   pr_changed = true;
 }
 
+Fl_Group *pr_op_fi_grp=(Fl_Group *)0;
+
 Fl_Input *psrc=(Fl_Input *)0;
 
 static void cb_psrc(Fl_Input*, void*) {
@@ -90,21 +98,21 @@ Fl_Double_Window* make_proj_window() {
   Fl_Double_Window* w;
   { Fl_Double_Window* o = project_options_window = new Fl_Double_Window(420, 265, "Project Options");
     w = o;
-    { Fl_Tabs* o = new Fl_Tabs(10, 10, 400, 205);
-      { Fl_Group* o = new Fl_Group(10, 35, 400, 180, "Project");
-        { Fl_Input* o = pname = new Fl_Input(135, 60, 255, 25, "Project Name:");
+    { Fl_Tabs* o = pr_op_tabs = new Fl_Tabs(10, 10, 400, 205);
+      { Fl_Group* o = pr_op_pr_grp = new Fl_Group(10, 35, 400, 180, "Project");
+        { Fl_Input* o = pname = new Fl_Input(135, 60, 255, 25, "Project Name");
           o->callback((Fl_Callback*)cb_pname);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = ptarg = new Fl_Input(135, 100, 255, 25, "Target File Name:");
+        { Fl_Input* o = ptarg = new Fl_Input(135, 100, 255, 25, "Target File Name");
           o->callback((Fl_Callback*)cb_ptarg);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = pbin = new Fl_Input(135, 150, 255, 25, "Bin Directory:");
+        { Fl_Input* o = pbin = new Fl_Input(135, 150, 255, 25, "Bin Directory");
           o->callback((Fl_Callback*)cb_pbin);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = pobdir = new Fl_Input(135, 125, 255, 25, "Object Directory:");
+        { Fl_Input* o = pobdir = new Fl_Input(135, 125, 255, 25, "Object Directory");
           o->callback((Fl_Callback*)cb_pobdir);
           o->when(FL_WHEN_CHANGED);
         }
@@ -115,38 +123,40 @@ Fl_Double_Window* make_proj_window() {
         }
         o->end();
       }
-      { Fl_Group* o = new Fl_Group(10, 35, 400, 170, "Compiler and Linker");
+      { Fl_Group* o = pr_op_cl_grp = new Fl_Group(10, 35, 400, 170, "Compiler and Linker");
         o->hide();
-        { Fl_Input* o = plib = new Fl_Input(135, 60, 255, 25, "Libraries:");
+        { Fl_Input* o = plib = new Fl_Input(135, 60, 255, 25, "Libraries");
           o->callback((Fl_Callback*)cb_plib);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = plibdir = new Fl_Input(135, 85, 255, 25, "Library Dirs:");
+        { Fl_Input* o = plibdir = new Fl_Input(135, 85, 255, 25, "Library Dirs");
           o->callback((Fl_Callback*)cb_plibdir);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = pincl = new Fl_Input(135, 110, 255, 25, "Include Dirs:");
+        { Fl_Input* o = pincl = new Fl_Input(135, 110, 255, 25, "Include Dirs");
           o->callback((Fl_Callback*)cb_pincl);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = pcflags = new Fl_Input(135, 135, 255, 25, "Compiler Flags:");
+        { Fl_Input* o = pcflags = new Fl_Input(135, 135, 255, 25, "Compiler Flags");
           o->callback((Fl_Callback*)cb_pcflags);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = pldflags = new Fl_Input(135, 160, 255, 25, "Linker Flags:");
+        { Fl_Input* o = pldflags = new Fl_Input(135, 160, 255, 25, "Linker Flags");
           o->callback((Fl_Callback*)cb_pldflags);
           o->when(FL_WHEN_CHANGED);
         }
         o->end();
       }
-      { Fl_Group* o = new Fl_Group(10, 35, 400, 170, "Files");
+      { Fl_Group* o = pr_op_fi_grp = new Fl_Group(10, 35, 400, 170, "Files");
         o->hide();
-        { Fl_Input* o = psrc = new Fl_Input(80, 70, 320, 25, "Sources:");
+        { Fl_Input* o = psrc = new Fl_Input(55, 75, 320, 25, "Sources");
           o->callback((Fl_Callback*)cb_psrc);
+          o->align(133);
           o->when(FL_WHEN_CHANGED);
         }
-        { Fl_Input* o = phdr = new Fl_Input(80, 100, 320, 25, "Headers:");
+        { Fl_Input* o = phdr = new Fl_Input(55, 140, 320, 25, "Headers");
           o->callback((Fl_Callback*)cb_phdr);
+          o->align(133);
           o->when(FL_WHEN_CHANGED);
         }
         o->end();

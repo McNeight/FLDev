@@ -33,6 +33,8 @@
 #include <iostream>
 #include <stdio.h>
 
+extern string get_load_err_msg();
+
 string trim(string const& source, char const* delims) {
   std::string result(source);
   std::string::size_type index = result.find_last_not_of(delims);
@@ -216,7 +218,7 @@ int Project::load() {
 		return 1;
 	}
 	else {
-		fl_alert("Projekt File not found!");
+		fl_alert(get_load_err_msg().c_str());
 		return 0;
 	}
 }

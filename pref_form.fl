@@ -2,7 +2,16 @@
 version 1.0104 
 header_name {.h} 
 code_name {.cpp}
+decl {\#include <FL/Fl_File_Chooser.H>} {public
+} 
+
 decl {\#include <FL/fl_show_colormap.H>} {public
+} 
+
+decl {\#include <stdio.h>} {public
+} 
+
+decl {void load_lang_cb(char *file);} {public
 } 
 
 decl {int text_size;} {public
@@ -35,6 +44,9 @@ decl {extern Fl_Color hl_character;} {public
 decl {extern Fl_Color background_color;} {public
 } 
 
+decl {extern char usrdocdir[256];} {public
+} 
+
 decl {int save_window_size;} {public
 } 
 
@@ -47,9 +59,6 @@ Function {make_pref_form()} {open
     label Preferences open
     xywh {350 207 525 330} type Double align 5 modal visible
   } {
-    Fl_Box {} {
-      xywh {10 15 505 270} box ENGRAVED_BOX
-    }
     Fl_Button pref_ok_btn {
       label OK
       callback {text_size = text_size_choice->value() * 2 + 6;
@@ -64,7 +73,8 @@ hl_type = type_btn->color();
 hl_keyword = keyword_btn->color();
 hl_character = character_btn->color();
 background_color = bg_btn->color();
-pref_window->hide();} selected
+sprintf(usrdocdir,"%s",usrdoc_input->value());
+pref_window->hide();}
       xywh {345 295 85 25}
     }
     Fl_Button pref_cancel_btn {
@@ -72,76 +82,113 @@ pref_window->hide();} selected
       callback {pref_window->hide();}
       xywh {435 295 80 25}
     }
-    Fl_Choice text_size_choice {
-      label {Text Size} open
-      xywh {95 30 60 25} down_box BORDER_BOX
-      code0 {text_size_choice->add("6");text_size_choice->add("8");text_size_choice->add("10");text_size_choice->add("12");text_size_choice->add("14");text_size_choice->add("16");text_size_choice->add("18");text_size_choice->add("20");}
-      code1 {text_size_choice->value(3);}
-    } {}
-    Fl_Check_Button smart_indent_check {
-      label {Use Smart-Indent Option}
-      xywh {30 95 180 25} down_box DOWN_BOX
-    }
-    Fl_Check_Button save_wsoe_check {
-      label {Save Window Size On Exit}
-      xywh {30 120 195 25} down_box DOWN_BOX
-    }
-    Fl_Check_Button hide_output_check {
-      label {Auto-hide Output Window}
-      xywh {30 145 195 25} down_box DOWN_BOX
-    }
-    Fl_Check_Button rec_pr_check {
-      label {Open previous project on startup}
-      xywh {30 170 235 25} down_box DOWN_BOX
-    }
-    Fl_Box {} {
-      label {Highlight Colors}
-      xywh {275 25 230 250} box ENGRAVED_BOX labeltype ENGRAVED_LABEL align 21
-    }
-    Fl_Button plain_btn {
-      label {Plain Text}
-      callback {plain_btn->color(fl_show_colormap(plain_btn->color()));}
-      xywh {305 60 15 15} align 8
-    }
-    Fl_Button line_btn {
-      label {Line Comments}
-      callback {line_btn->color(fl_show_colormap(line_btn->color()));}
-      xywh {305 80 15 15} align 8
-    }
-    Fl_Button block_btn {
-      label {Block Comments}
-      callback {block_btn->color(fl_show_colormap(block_btn->color()));}
-      xywh {305 100 15 15} align 8
-    }
-    Fl_Button string_btn {
-      label Strings
-      callback {string_btn->color(fl_show_colormap(string_btn->color()));}
-      xywh {305 120 15 15} align 8
-    }
-    Fl_Button directive_btn {
-      label Directives
-      callback {directive_btn->color(fl_show_colormap(directive_btn->color()));}
-      xywh {305 140 15 15} align 8
-    }
-    Fl_Button type_btn {
-      label Types
-      callback {type_btn->color(fl_show_colormap(type_btn->color()));}
-      xywh {305 160 15 15} align 8
-    }
-    Fl_Button keyword_btn {
-      label Keywords
-      callback {keyword_btn->color(fl_show_colormap(keyword_btn->color()));}
-      xywh {305 180 15 15} align 8
-    }
-    Fl_Button character_btn {
-      label Characters
-      callback {character_btn->color(fl_show_colormap(character_btn->color()));}
-      xywh {305 200 15 15} align 8
-    }
-    Fl_Button bg_btn {
-      label Background
-      callback {bg_btn->color(fl_show_colormap(bg_btn->color()));}
-      xywh {305 240 15 15} align 8
+    Fl_Tabs pref_tabs {open
+      xywh {5 5 515 285}
+    } {
+      Fl_Group ed_group {
+        label Editor open
+        xywh {10 40 510 250}
+      } {
+        Fl_Box {} {
+          xywh {20 85 260 190} box ENGRAVED_BOX labeltype ENGRAVED_LABEL align 21
+        }
+        Fl_Choice text_size_choice {
+          label {Text Size} open
+          xywh {130 45 60 25} down_box BORDER_BOX
+          code0 {text_size_choice->add("6");text_size_choice->add("8");text_size_choice->add("10");text_size_choice->add("12");text_size_choice->add("14");text_size_choice->add("16");text_size_choice->add("18");text_size_choice->add("20");}
+          code1 {text_size_choice->value(3);}
+        } {}
+        Fl_Check_Button smart_indent_check {
+          label {Use Auto-Indent Option} selected
+          xywh {30 95 180 25} down_box DOWN_BOX
+        }
+        Fl_Check_Button save_wsoe_check {
+          label {Save Window Size On Exit}
+          xywh {30 120 195 25} down_box DOWN_BOX
+        }
+        Fl_Check_Button hide_output_check {
+          label {Auto-hide Output Window}
+          xywh {30 145 195 25} down_box DOWN_BOX
+        }
+        Fl_Check_Button rec_pr_check {
+          label {Open previous project on startup}
+          xywh {30 170 235 25} down_box DOWN_BOX
+        }
+        Fl_Box pref_highlight_label {
+          label {Highlight Colors}
+          xywh {290 40 220 235} box ENGRAVED_BOX labeltype ENGRAVED_LABEL align 21
+        }
+        Fl_Button plain_btn {
+          label {Plain Text}
+          callback {plain_btn->color(fl_show_colormap(plain_btn->color()));}
+          xywh {320 70 15 15} align 8
+        }
+        Fl_Button line_btn {
+          label {Line Comments}
+          callback {line_btn->color(fl_show_colormap(line_btn->color()));}
+          xywh {320 90 15 15} align 8
+        }
+        Fl_Button block_btn {
+          label {Block Comments}
+          callback {block_btn->color(fl_show_colormap(block_btn->color()));}
+          xywh {320 110 15 15} align 8
+        }
+        Fl_Button string_btn {
+          label Strings
+          callback {string_btn->color(fl_show_colormap(string_btn->color()));}
+          xywh {320 130 15 15} align 8
+        }
+        Fl_Button directive_btn {
+          label Directives
+          callback {directive_btn->color(fl_show_colormap(directive_btn->color()));}
+          xywh {320 150 15 15} align 8
+        }
+        Fl_Button type_btn {
+          label Types
+          callback {type_btn->color(fl_show_colormap(type_btn->color()));}
+          xywh {320 170 15 15} align 8
+        }
+        Fl_Button keyword_btn {
+          label Keywords
+          callback {keyword_btn->color(fl_show_colormap(keyword_btn->color()));}
+          xywh {320 190 15 15} align 8
+        }
+        Fl_Button character_btn {
+          label Characters
+          callback {character_btn->color(fl_show_colormap(character_btn->color()));}
+          xywh {320 210 15 15} align 8
+        }
+        Fl_Button bg_btn {
+          label Background
+          callback {bg_btn->color(fl_show_colormap(bg_btn->color()));}
+          xywh {320 250 15 15} align 8
+        }
+      }
+      Fl_Group env_group {
+        label Environment open
+        xywh {15 30 505 255} hide
+      } {
+        Fl_Input usrdoc_input {
+          label {Path to FLTK Docs}
+          xywh {155 55 345 25}
+        }
+        Fl_Button lang_btn {
+          label {Load Language File}
+          callback {char *fname = fl_file_chooser("","*.lng","");
+if(fname==NULL) return;
+load_lang_cb(fname);}
+          xywh {155 145 180 25}
+        }
+        Fl_Output cur_lang_output {
+          label {Current Language}
+          xywh {155 115 180 25}
+        }
+        Fl_Button def_lang_btn {
+          label {Restore Default}
+          callback {load_lang_cb(NULL);}
+          xywh {355 115 145 25}
+        }
+      }
     }
   }
 } 
