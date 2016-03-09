@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0302 
+version 1.0303 
 header_name {.h} 
 code_name {.cpp}
 decl {\#include "globals.h"} {public local
@@ -14,17 +14,17 @@ decl {bool pr_wiz_ok;} {public local
 Function {make_proj_wizard()} {open
 } {
   Fl_Window proj_wiz {
-    label {New Project} open
-    xywh {474 187 498 314} type Double modal visible
+    label {New Project} open selected
+    xywh {2544 288 475 260} type Double modal visible
   } {
     Fl_Input pr_dir_input {
       label {Project Directory}
-      xywh {130 65 320 25}
+      xywh {130 65 275 25}
     }
     Fl_Button pr_wiz_browse_btn {
       label {...}
       callback {pr_dir_input->value(fl_dir_chooser("Choose Directory",0,0));}
-      xywh {455 65 35 25}
+      xywh {415 65 35 25}
     }
     Fl_Input pr_name_input {
       label {Project Name}
@@ -34,12 +34,12 @@ Function {make_proj_wizard()} {open
       label OK
       callback {pr_wiz_ok=true;
 proj_wiz->hide();}
-      xywh {320 270 80 25}
+      xywh {215 210 80 25}
     }
     Fl_Button pr_wiz_cancel_btn {
       label Cancel
       callback {proj_wiz->hide();}
-      xywh {410 270 80 25}
+      xywh {370 210 80 25}
     }
     Fl_Group {} {
       label Type open
@@ -51,7 +51,7 @@ proj_wiz->hide();}
         code0 {x_app->value(1);}
       }
       Fl_Round_Button con_app {
-        label {Console App} selected
+        label {Console App}
         xywh {180 110 110 25} type Radio down_box ROUND_DOWN_BOX
         code0 {con_app->value(0);}
       }
@@ -86,7 +86,7 @@ if (newfile != NULL)
     }
     Fl_Check_Button main_cpp_chk {
       label {Generate 'main.cpp'}
-      xywh {130 235 155 25} down_box DOWN_BOX
+      xywh {130 175 155 25} down_box DOWN_BOX
     }
     Fl_Check_Button own_make_chk {
       label {Use own makefile}

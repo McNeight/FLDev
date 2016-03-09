@@ -1,5 +1,5 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0302 
+version 1.0303 
 header_name {.h} 
 code_name {.cpp}
 decl {\#include "globals.h"} {public local
@@ -11,95 +11,95 @@ decl {int pr_changed;} {public local
 Function {make_proj_window()} {open
 } {
   Fl_Window project_options_window {
-    label {Project Options} open
-    xywh {536 200 422 306} type Double modal visible
+    label {Project Options} open selected
+    xywh {2550 180 410 370} type Double modal visible
   } {
     Fl_Tabs pr_op_tabs {open
-      xywh {5 10 405 250}
+      xywh {5 5 400 291}
     } {
       Fl_Group pr_op_pr_grp {
         label Project open
-        xywh {5 35 400 225}
+        xywh {5 35 400 261} hide
       } {
         Fl_Input pname {
           label {Project Name}
           callback {pr_changed = true;}
-          xywh {130 60 255 25} when 1
+          xywh {15 60 380 25} align 5 when 1
         }
         Fl_Input ppr_dir {
           label {Project Directory}
           callback {pr_changed = true;}
-          xywh {130 90 250 25}
+          xywh {15 105 380 25} align 5
         }
         Fl_Input ptarg {
           label {Target File Name}
           callback {pr_changed = true;}
-          xywh {130 120 255 25} when 1
+          xywh {15 150 380 25} align 5 when 1
         }
         Fl_Input pobdir {
           label {Object Directory}
-          callback {pr_changed = true;} selected
-          xywh {130 155 255 25} when 1
+          callback {pr_changed = true;}
+          xywh {15 195 380 25} align 5 when 1
         }
         Fl_Input pbin {
           label {Bin Directory}
           callback {pr_changed = true;}
-          xywh {130 190 255 25} when 1
+          xywh {15 240 380 25} align 5 when 1
         }
         Fl_Check_Button console_check {
           label {Execute in Console}
           callback {if(pr_changed == 0) pr_changed = 2;}
-          xywh {130 220 150 35} down_box DOWN_BOX when 1
+          xywh {125 261 150 35} down_box DOWN_BOX when 1
         }
       }
       Fl_Group pr_op_cl_grp {
-        label {Compiler and Linker}
-        xywh {10 35 400 170} hide
+        label {Compiler and Linker} open
+        xywh {5 35 400 260} hide
       } {
         Fl_Input plib {
           label Libraries
           callback {pr_changed = true;}
-          xywh {135 60 255 25} when 1
+          xywh {15 60 380 25} align 5 when 1
         }
         Fl_Input plibdir {
           label {Library Dirs}
           callback {pr_changed = true;}
-          xywh {135 85 255 25} when 1
+          xywh {15 105 380 25} align 5 when 1
         }
         Fl_Input pincl {
           label {Include Dirs}
           callback {pr_changed = true;}
-          xywh {135 110 255 25} when 1
+          xywh {15 150 380 25} align 5 when 1
         }
         Fl_Input pcflags {
           label {Compiler Flags}
           callback {pr_changed = true;}
-          xywh {135 135 255 25} when 1
+          xywh {15 195 380 25} align 5 when 1
         }
         Fl_Input pldflags {
           label {Linker Flags}
           callback {pr_changed = true;}
-          xywh {135 160 255 25} when 1
+          xywh {15 240 380 25} align 5 when 1
         }
       }
       Fl_Group pr_op_fi_grp {
         label Files open
-        xywh {10 35 400 170} hide
+        xywh {5 35 400 260}
       } {
         Fl_Input psrc {
           label Sources
           callback {pr_changed = true;}
-          xywh {35 60 320 25} align 133 when 1
+          xywh {15 60 340 25} align 5 when 1
         }
         Fl_Input phdr {
           label Headers
           callback {pr_changed = true;}
-          xywh {35 105 320 25} align 133 when 1
+          xywh {15 105 340 25} align 5 when 1
         }
         Fl_Input pgui {
           label {Fluid GUI Files}
           callback {pr_changed = true;}
-          xywh {35 160 320 25} align 133 when 1
+          xywh {15 150 340 25} align 5 when 1
         }
         Fl_Button {} {
           label add
@@ -141,20 +141,20 @@ if (newfile != NULL)
 	pgui->value(trim(string(pgui->value())+ " " + rel).c_str());
 	pr_changed = true;
 }}
-          xywh {360 160 35 25}
+          xywh {360 150 35 25}
         }
       }
     }
     Fl_Button {} {
       label OK
       callback {project_options_window->hide();}
-      xywh {250 270 75 25}
+      xywh {70 319 75 25}
     }
     Fl_Button {} {
       label Cancel
       callback {pr_changed = 0;
 project_options_window->hide();}
-      xywh {335 270 75 25}
+      xywh {255 319 75 25}
     }
   }
 } 

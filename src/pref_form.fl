@@ -1,72 +1,72 @@
 # data file for the Fltk User Interface Designer (fluid)
-version 1.0104 
+version 1.0303 
 header_name {.h} 
 code_name {.cpp}
-decl {\#include <FL/Fl_File_Chooser.H>} {public
+decl {\#include <FL/Fl_File_Chooser.H>} {public local
 } 
 
-decl {\#include <FL/fl_show_colormap.H>} {public
+decl {\#include <FL/fl_show_colormap.H>} {public local
 } 
 
-decl {\#include <stdio.h>} {public
+decl {\#include <stdio.h>} {public local
 } 
 
-decl {void load_lang_cb(char *file);} {public
+decl {void load_lang_cb(char *file);} {public local
 } 
 
-decl {int text_size;} {public
+decl {int text_size;} {public local
 } 
 
-decl {extern Fl_Color hl_plain;} {public
+decl {extern Fl_Color hl_plain;} {public local
 } 
 
-decl {extern Fl_Color hl_linecomment;} {public
+decl {extern Fl_Color hl_linecomment;} {public local
 } 
 
-decl {extern Fl_Color hl_blockcomment;} {public
+decl {extern Fl_Color hl_blockcomment;} {public local
 } 
 
-decl {extern Fl_Color hl_string;} {public
+decl {extern Fl_Color hl_string;} {public local
 } 
 
-decl {extern Fl_Color hl_directive;} {public
+decl {extern Fl_Color hl_directive;} {public local
 } 
 
-decl {extern Fl_Color hl_type;} {public
+decl {extern Fl_Color hl_type;} {public local
 } 
 
-decl {extern Fl_Color hl_keyword;} {public
+decl {extern Fl_Color hl_keyword;} {public local
 } 
 
-decl {extern Fl_Color hl_character;} {public
+decl {extern Fl_Color hl_character;} {public local
 } 
 
-decl {extern Fl_Color background_color;} {public
+decl {extern Fl_Color background_color;} {public local
 } 
 
-decl {extern char usrdocdir[256];} {public
+decl {extern char usrdocdir[256];} {public local
 } 
 
-decl {int save_window_size;} {public
+decl {int save_window_size;} {public local
 } 
 
-decl {bool auto_brace_mode;} {public
+decl {bool auto_brace_mode;} {public local
 } 
 
-decl {int auto_hide;} {public
+decl {int auto_hide;} {public local
 } 
 
-decl {int delbak;} {public
+decl {int delbak;} {public local
 } 
 
-decl {int backup_file;} {public
+decl {int backup_file;} {public local
 } 
 
 Function {make_pref_form()} {open
 } {
   Fl_Window pref_window {
     label Preferences open
-    xywh {350 207 525 330} type Double align 5 modal visible
+    xywh {2557 382 517 322} type Double align 5 modal visible
   } {
     Fl_Button pref_ok_btn {
       label OK
@@ -86,7 +86,7 @@ background_color = bg_btn->color();
 sprintf(usrdocdir,"%s",usrdoc_input->value());
 backup_file = bak_check->value();
 delbak = delbak_check->value();
-pref_window->hide();} selected
+pref_window->hide();}
       xywh {345 295 85 25}
     }
     Fl_Button pref_cancel_btn {
@@ -98,7 +98,7 @@ pref_window->hide();} selected
       xywh {5 5 515 285}
     } {
       Fl_Group ed_group {
-        label Editor open
+        label Editor open selected
         xywh {10 40 510 250}
       } {
         Fl_Box {} {
