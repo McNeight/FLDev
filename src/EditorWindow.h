@@ -130,7 +130,7 @@ class EditorWindow : public Fl_Double_Window {
     My_Text_Editor2		*output;
     Fl_Box				*line_nr_box;
 
-	My_File_Browser	 	*file_browser;
+	Fl_File_Browser	 	*file_browser;
 	Fl_File_Browser 	*pr_browser;
     char               	search[256];
 

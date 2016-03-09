@@ -34,7 +34,7 @@
 
 #include <string>
 #include <deque>
-#include "My_Text_Editor.h"
+//#include "My_Text_Editor.h"
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_File_Browser.H>
 #include <FL/Fl_Hold_Browser.H>

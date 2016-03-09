@@ -19,7 +19,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "globals.h"
 #include "build_tools.h"
 
-#include "My_File_Browser.h" 
+//#include "My_File_Browser.h" 
 #include "EditorWindow.h" 
 
 using namespace std;

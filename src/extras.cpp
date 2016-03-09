@@ -325,7 +325,7 @@ int Project::load() {
 }
 
 
-static void kill_selection(My_Text_Editor* e) {
+static void kill_selection(Fl_Text_Editor* e) {
   if (e->buffer()->selected()) {
     e->insert_position(e->buffer()->primary_selection()->start());
     e->buffer()->remove_selection();

@@ -44,12 +44,12 @@
 		improve navigator
 */
 
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <string>
 #include <ctype.h>
 #include <errno.h>
+
 #include <iostream>
 #include <deque>
 #ifdef _WIN32
@@ -62,6 +62,7 @@
 #endif
 #include "icon_pixmaps.h"
 #include "globals.h"
+
 #ifdef __MWERKS__ 
 #define FL_DLL
 #endif
@@ -85,7 +86,7 @@ WITHHINTS //do not use that?
 FOR_NANOLINUX
 */
 
-#include "My_File_Browser.h"
+//#include "My_File_Browser.h"
 
 #include "globals.h"
 
@@ -141,7 +142,7 @@ Fl_Text_Display::Style_Table_Entry
 		     { FL_RED, 		  FL_HELVETICA, TEXTSIZE } 	// B - Error
 		   };
 
-My_Text_Display::Style_Table_Entry
+Fl_Text_Display::Style_Table_Entry
                    styletable[] = {	// Style table
 		     { hl_plain,      FL_COURIER,        TEXTSIZE }, // A - Plain
 		     { hl_linecomment, FL_COURIER_ITALIC, TEXTSIZE }, // B - Line comments
@@ -2507,8 +2508,8 @@ void file_browser_cb(Fl_Widget* o, void*) {
 
 void fb_showhidden_cb(Fl_Widget* o, void*)
 {
-	window->file_browser->toggle_show_hidden();
-	window->file_browser->reload();
+	//window->file_browser->toggle_show_hidden();
+	//window->file_browser->reload();
 }
 
 
@@ -3738,7 +3739,7 @@ Fl_Window* make_form() {
 			fb_pop_btn->type(Fl_Menu_Button::POPUP3);
 			fb_pop_btn->add("Show Hidden",0,fb_showhidden_cb);
 			
-			w->file_browser = new My_File_Browser(o->x(),o->y()+20+browser_offset,o->w(),o->h()-20-browser_offset);
+			w->file_browser = new Fl_File_Browser(o->x(),o->y()+20+browser_offset,o->w(),o->h()-20-browser_offset);
 			
 			w->file_browser->load(buf);
 			w->file_browser->iconsize(16);

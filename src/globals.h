@@ -104,7 +104,7 @@ extern Fl_Group *browser_file_grp, *browser_nav_grp;
 #define TEXTSIZE 10
 
 extern Fl_Text_Display::Style_Table_Entry op_styletable[];
-extern My_Text_Display::Style_Table_Entry styletable[];
+extern Fl_Text_Display::Style_Table_Entry styletable[];
 
 extern const char         *code_keywords[];
 extern const char         *code_types[];
