@@ -22,10 +22,6 @@
 
 #pragma once
 
-//#ifdef _WIN32
-//extern char *strsep(char **, const char *);
-//#endif
-
 #include <FL/Fl.H>
 #include <FL/Fl_Text_Editor.H>
 
@@ -35,83 +31,9 @@
 #include <FL/Fl_Return_Button.H>
 #include <FL/Fl_Tabs.H>
 
+#include "Fl_Dev_Code_Editor.h"
 #include "Fl_Dev_Util.h"
 #include "globals.h"
-
-//output for make, could be replaced by Fl_Browser in the future
-class My_Text_Editor2 : public Fl_Text_Editor {
-public:
-    My_Text_Editor2(int x, int y, int w, int h) : Fl_Text_Editor(x, y, w, h) {};
-    int handle(int event) {
-        if (!buffer()) return 0;
-
-        if (!Fl::event_inside(text_area.x, text_area.y, text_area.w, text_area.h))
-        {
-            return Fl_Group::handle(event);
-        }
-
-        if (event == FL_PUSH)
-        {
-            if (Fl::focus() != this)
-            {
-                Fl::focus(this);
-                handle(FL_FOCUS);
-            }
-
-            int pos = xy_to_position(Fl::event_x(), Fl::event_y(), CURSOR_POS);
-            buffer()->select(buffer()->line_start(pos), buffer()->line_end(pos) + 1);
-            if (Fl::event_clicks() > 0)
-            {
-                Fl::event_clicks(-1);
-                char *buf = outputtb->line_text(pos);
-                if (buf == NULL) return 0;
-                char *t_filename = strsep(&buf, ":");
-                if (buf == NULL) return 0;
-                char *linenr = strsep(&buf, ":");
-                if (buf == NULL) return 0;
-                int line;
-
-                if (strcmp(t_filename, filename) != 0)
-                {
-                    if (!check_save()) return 0;
-
-                    if (t_filename == "") return 0;
-                    if (t_filename != NULL)
-                    {
-                        load_file(t_filename, -1);
-                        add_recent_file_to_menu(filename);
-                    }
-                }
-
-                if (sscanf(linenr, "%d", &line))
-                {
-                    Fl::focus(te);
-                    te->buffer()->unselect();
-                    int txtpos = linepos(line);
-                    te->insert_position(te->line_start(txtpos - 1));
-                    te->buffer()->select(te->buffer()->line_start(txtpos - 1), te->buffer()->line_end(txtpos - 1) + 1);
-                    te->show_insert_position();
-                }
-            }
-        }
-        else if (event == FL_MOUSEWHEEL) return mVScrollBar->handle(event);
-        else return Fl_Group::handle(event);
-    };
-
-    int linepos(int line) {
-        int ret = 0;
-        int size = textbuf->length();
-        while (ret < size)
-        {
-            if (textbuf->count_lines(0, textbuf->line_end(ret)) >= line) break;
-            ret = textbuf->line_end(ret);
-            ret++;
-        }
-        return ret;
-    }
-};
-
-
 
 
 class Fl_Dev_Editor_Window : public Fl_Double_Window {
@@ -149,8 +71,8 @@ public:
     Fl_Box	       		*statusbar;
     Fl_Output			*fb_label;
     Fl_Menu_Button		*fb_home_btn;
-    Fl_Text_Editor_ext 	*editor;
-    My_Text_Editor2		*output;
+    Fl_Dev_Code_Editor 	*editor;
+    Fl_Dev_Code_Editor	*output;
     Fl_Box				*line_nr_box;
 
     Fl_File_Browser	 	*file_browser;

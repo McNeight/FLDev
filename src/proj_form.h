@@ -22,8 +22,8 @@
 #ifndef proj_form_h
 #define proj_form_h
 #include <FL/Fl.H>
-#include "Fl_Dev_I18N.h";
-#include "Fl_Dev_Util.h";
+#include "Fl_Dev_I18N.h"
+#include "Fl_Dev_Util.h"
 #include "globals.h"
 extern int pr_changed; 
 #include <FL/Fl_Double_Window.H>

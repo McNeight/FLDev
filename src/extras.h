@@ -23,6 +23,7 @@
 
 #include <string>
 #include <deque>
+
 #include <FL/Fl_Text_Editor.H>
 #include <FL/Fl_File_Browser.H>
 #include <FL/Fl_Hold_Browser.H>
@@ -31,53 +32,11 @@
 #include <FL/Fl_Tile.H>
 
 #include "proj_form.h"
-//extern Fl_Menu_Bar* menubar;
 
 using namespace std;
 
 void build_template_main();
 int create_file(const char *file);
-
-
-
-class Nav_entry {
-public:
-    Nav_entry(string name, int pos) {
-        this->name = name;
-        this->pos = pos;
-        this->depth = 0;
-    }
-    Nav_entry(string name, int pos, int depth) {
-        this->name = name;
-        this->pos = pos;
-        this->depth = depth;
-    }
-    Nav_entry(string name, int pos, string type, string args) {
-        this->name = name;
-        this->pos = pos;
-        this->type = type;
-        this->args = args;
-        this->depth = 0;
-    }
-    string name;
-    string type;
-    string args;
-    int pos;
-    int depth;
-    static deque <Nav_entry> children;
-};
-
-class Class_stack_item {
-public:
-    Class_stack_item(string name, int depth) {
-        this->name = name;
-        this->depth = depth;
-    }
-
-    string name;
-    int depth;
-};
-
 
 class My_Tile_wo_Nav : public Fl_Tile {
 public:
@@ -91,7 +50,8 @@ public:
     int handle(int event);
 };
 
-
+extern My_Group_wo_Nav *all_but_menu_grp;
+extern My_Group_wo_Nav *gwn;
 
 class SmartButton : public Fl_Button {
 public:
@@ -111,18 +71,6 @@ public:
 };
 
 
-
-
-
-class Fl_Text_Editor_ext : public Fl_Text_Editor {
-public:
-    Fl_Text_Editor_ext(int x, int y, int w, int h) :Fl_Text_Editor(x, y, w, h) {}
-    int handle_key_ext();
-    int handle(int event);
-    //Fl_Color mCursor_color;
-    bool smart_indent;
-    void get_line_nrs(int *first_line, int *last_line);
-};
 
 
 #endif

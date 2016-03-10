@@ -21,13 +21,13 @@ comment {/*
     along with this program; if not, write to the Free Software
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
-} {selected in_source in_header
+} {in_source in_header
 } 
 
-decl {\#include "Fl_Dev_I18N.h";} {public local
+decl {\#include "Fl_Dev_I18N.h"} {public local
 } 
 
-decl {\#include "Fl_Dev_Util.h";} {public local
+decl {\#include "Fl_Dev_Util.h"} {public local
 } 
 
 decl {\#include "globals.h"} {public local
@@ -39,8 +39,8 @@ decl {int pr_changed;} {public local
 Function {make_proj_window()} {open
 } {
   Fl_Window project_options_window {
-    label {Project Options} open
-    xywh {2048 188 410 370} type Double modal size_range {410 370 0 0} visible
+    label {Project Options} open selected
+    xywh {2048 150 410 370} type Double modal size_range {410 370 0 0} visible
   } {
     Fl_Tabs pr_op_tabs {open
       xywh {5 5 400 291}

@@ -23,6 +23,9 @@
 
 #pragma once
 
+#include <string>
+#include <deque>
+
 #include <FL/Fl.H>
 #include <FL/x.H>
 
@@ -45,7 +48,10 @@
 #include <FL/Fl_Menu_Button.H>
 
 #include "extras.h" 
-#include "Fl_Dev_Code_Browser.h" 
+#include "Fl_Dev_Code_Browser.h"
+#include "Fl_Dev_Code_Browser_Entry.h"
+#include "Fl_Dev_File_History.h"
+#include "Fl_Dev_Project.h"
 #include "pref_form.h"
 #include "proj_form.h"
 #include "proj_wiz_form.h"
@@ -66,7 +72,7 @@ Fl_Window* make_form();
 
 class Fl_Dev_Editor_Window;
 class Fl_Dev_Project;
-class Fl_Text_Editor_ext;
+class Fl_Dev_Code_Editor;
 
 extern Fl_Text_Buffer *outputtb;
 extern char filename[256];
@@ -85,7 +91,7 @@ Fl_Tile *tile;
 extern Fl_Text_Buffer     *textbuf;
 extern Fl_Text_Buffer     *stylebuf;
 extern Fl_Text_Buffer		*op_stylebuf;
-extern Fl_Text_Editor_ext 		*te;
+extern Fl_Dev_Code_Editor 		*te;
 
 
 
@@ -116,5 +122,35 @@ extern const char         *code_types[];
 
 #define FL_MENU_RECENT_FILES 4
 #define FL_MENU_RECENT_PROJECTS 48
+
+extern Fl_Menu_Button *navigator_pop_btn, *fb_pop_btn, *file_pop_btn;
+
+// Index for insertion of most recent projects
+extern int	rec_pr_menu_index;
+extern int bufchanged;
+extern char filename[256];
+extern char filename_wo_path[256];
+extern char title[256], usrdocdir[256];
+extern bool hidden, cppfile, filelistopen, make_error;
+extern bool exec_running, nav_expand, show_line_nrs;
+extern int linecount, update_count;
+extern int num_windows;
+extern int loading;
+extern int nav_sort;
+extern int show_nav;
+extern int line_nr_size;
+
+extern Fl_Text_Buffer *outputtb;
+extern Fl_Dev_Project project;
+extern Fl_Dev_File_History *file_hist;
+extern Fl_Menu_Bar* menubar;
+extern Fl_Help_Dialog *help_dialog;
+extern Fl_Dev_Editor_Window* window;
+extern Fl_Group *smartbar;
+extern Fl_Group *output_grp;
+extern Fl_Tile *tile;
+extern std::deque <std::string> bakfiles;
+
+extern Fl_Dev_Code_Browser *navigator_browser;
 
 #endif

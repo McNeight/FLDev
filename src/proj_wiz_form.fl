@@ -27,7 +27,7 @@ comment {/*
 decl {\#include <FL/Fl_Native_File_Chooser.H>} {public local
 } 
 
-decl {\#include "Fl_Dev_Util.h";} {public local
+decl {\#include "Fl_Dev_Util.h"} {public local
 } 
 
 decl {\#include "globals.h"} {public local
@@ -40,7 +40,7 @@ Function {make_proj_wizard()} {open
 } {
   Fl_Window proj_wiz {
     label {New Project Wizard} open selected
-    xywh {2052 156 475 260} type Double modal size_range {475 260 0 0} visible
+    xywh {2048 150 475 260} type Double modal size_range {475 260 0 0} visible
   } {
     Fl_Input pr_dir_input {
       label {Project Directory}

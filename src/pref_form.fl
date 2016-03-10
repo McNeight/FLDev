@@ -30,7 +30,7 @@ decl {\#include <FL/Fl_Native_File_Chooser.H>} {public local
 decl {\#include <FL/fl_show_colormap.H>} {public local
 } 
 
-decl {\#include "Fl_Dev_Util.h";} {public local
+decl {\#include "Fl_Dev_Util.h"} {public local
 } 
 
 decl {\#include "globals.h"} {public local
@@ -87,11 +87,11 @@ decl {int delbak;} {public local
 decl {int backup_file;} {public local
 } 
 
-Function {make_pref_form()} {open selected
+Function {make_pref_form()} {open
 } {
   Fl_Window pref_window {
-    label Preferences open
-    xywh {2056 188 525 325} type Double align 5 modal size_range {525 325 0 0} visible
+    label Preferences open selected
+    xywh {2048 150 525 325} type Double align 5 modal size_range {525 325 0 0} visible
   } {
     Fl_Button pref_ok_btn {
       label OK

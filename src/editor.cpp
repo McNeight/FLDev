@@ -50,8 +50,6 @@
 #include <unistd.h>
 #include <X11/xpm.h>
 #endif
-#include "icons/icon_pixmaps.h"
-#include "globals.h"
 
 #ifdef __MWERKS__ 
 #define FL_DLL
@@ -76,12 +74,17 @@ WITHHINTS //do not use that?
 FOR_NANOLINUX
 */
 
-//#include "My_File_Browser.h"
-
 #include "globals.h"
 
-#include "highlight.h"
 #include "build_tools.h"
+#include "extras.h"
+#include "highlight.h"
+#include "icons/icon_pixmaps.h"
+#include "Fl_Dev_Callbacks.h"
+#include "Fl_Dev_Code_Browser.h"
+#include "Fl_Dev_Code_Browser_Class.h"
+#include "Fl_Dev_Code_Browser_Entry.h"
+#include "Fl_Dev_Code_Editor.h"
 #include "Fl_Dev_Editor_Window.h"
 #include "Fl_Dev_File_History.h"
 #include "Fl_Dev_I18N.h"
@@ -90,43 +93,8 @@ FOR_NANOLINUX
 
 using namespace std;
 
-// Index for insertion of most recent projects
-int	rec_pr_menu_index = 49;
-int bufchanged = 0;
-char filename[256] = "";
-char filename_wo_path[256] = "";
-char title[256], usrdocdir[256];
-bool hidden = true, cppfile, filelistopen = false, make_error = false;
-bool exec_running = false, nav_expand = false, show_line_nrs = false;
-int linecount, update_count;
-int num_windows = 0;
-int loading = 0;
-int nav_sort = 0;
-int show_nav = 0;
-int line_nr_size = 50;
-
-
-Fl_Text_Buffer *outputtb = 0;
-Fl_Dev_Project project;
-Fl_Dev_File_History *file_hist;
-Fl_Menu_Bar* menubar;
-Fl_Help_Dialog *help_dialog;
-Fl_Dev_Editor_Window* window;
-Fl_Group *smartbar;
-Fl_Group *output_grp;
-Fl_Tile *tile;
-deque <string> bakfiles;
-
-Fl_Dev_Code_Browser *navigator_browser;
-
-deque<Nav_entry> Nav_entry::children;
-
-Fl_Group *browser_file_grp, *browser_nav_grp;
 My_Group_wo_Nav *all_but_menu_grp;
-Fl_Menu_Button *navigator_pop_btn, *fb_pop_btn, *file_pop_btn;
 My_Group_wo_Nav *gwn;
-
-
 
 Fl_Text_Display::Style_Table_Entry
 op_styletable[] = {	// Style table
@@ -160,36 +128,44 @@ enum				// Data opcodes
 };
 
 
-//callback functions
-void owbt_callback(Fl_Widget*, void*);
-void pr_opt_cb(Fl_Widget*, void*);
-void open_pr_cb();
-void save_pr_cb();
-void new_pr_cb();
-void pref_cb(Fl_Widget*, void*);
-void show_browser_cb();
-void linenumbers_cb();
-void show_nav_cb();
-void generate_makefile_cb();
-void b_cb(Fl_Widget* o, void*);
-void manual_cb(Fl_Widget *, void *);
-void ref_cb(Fl_Widget *, void *);
-void recent_file_cb(Fl_Widget* w, void*);
-void save_cb();
-void saveas_cb();
-void find2_cb(Fl_Widget*, void*);
-void replall_cb(Fl_Widget*, void*);
-void replace2_cb(Fl_Widget*, void*);
-void replcan_cb(Fl_Widget*, void*);
-void generate_makefile_cb();
-void run_cb(Fl_Widget*, void*);
-void make_(Fl_Widget* w, void* v, int mode = 0);
+Fl_Group *browser_file_grp, *browser_nav_grp;
+Fl_Menu_Button *navigator_pop_btn, *fb_pop_btn, *file_pop_btn;
 
-deque <Nav_entry> funs;
-deque <Nav_entry> classes;
-deque <Nav_entry> structs;
-deque <Nav_entry> enums;
-deque <Nav_entry> unions;
+// Index for insertion of most recent projects
+int	rec_pr_menu_index = 49;
+int bufchanged = 0;
+char filename[256] = "";
+char filename_wo_path[256] = "";
+char title[256], usrdocdir[256];
+bool hidden = true, cppfile, filelistopen = false, make_error = false;
+bool exec_running = false, nav_expand = false, show_line_nrs = false;
+int linecount, update_count;
+int num_windows = 0;
+int loading = 0;
+int nav_sort = 0;
+int show_nav = 0;
+int line_nr_size = 50;
+
+Fl_Text_Buffer *outputtb = 0;
+Fl_Dev_Project project;
+Fl_Dev_File_History *file_hist;
+Fl_Menu_Bar* menubar;
+Fl_Help_Dialog *help_dialog;
+Fl_Dev_Editor_Window* window;
+Fl_Group *smartbar;
+Fl_Group *output_grp;
+Fl_Tile *tile;
+std::deque <std::string> bakfiles;
+
+Fl_Dev_Code_Browser *navigator_browser;
+
+std::deque<Fl_Dev_Code_Browser_Entry> Fl_Dev_Code_Browser_Entry::children;
+
+deque <Fl_Dev_Code_Browser_Entry> funs;
+deque <Fl_Dev_Code_Browser_Entry> classes;
+deque <Fl_Dev_Code_Browser_Entry> structs;
+deque <Fl_Dev_Code_Browser_Entry> enums;
+deque <Fl_Dev_Code_Browser_Entry> unions;
 
 
 /*
@@ -312,7 +288,7 @@ void navigator_update(char *text, char *style, int length) {
     unions.clear();
 
     string tmp_str = "";
-    deque <Class_stack_item> last_class;
+    deque <Fl_Dev_Code_Browser_Class> last_class;
     int last_class_depth = 0;
     //cout << "update" << endl;
 
@@ -663,12 +639,12 @@ void navigator_update(char *text, char *style, int length) {
 
                 if (is_class_d == 1)
                 {
-                    classes.push_back(Nav_entry(func_name, pos, last_class.size()));
-                    last_class.push_front(Class_stack_item(func_name, depth));
+                    classes.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, last_class.size()));
+                    last_class.push_front(Fl_Dev_Code_Browser_Class(func_name, depth));
                 }
-                else if (is_class_d == 2) structs.push_back(Nav_entry(func_name, pos));
-                else if (is_class_d == 3) enums.push_back(Nav_entry(func_name, pos));
-                else if (is_class_d == 4) unions.push_back(Nav_entry(func_name, pos));
+                else if (is_class_d == 2) structs.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos));
+                else if (is_class_d == 3) enums.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos));
+                else if (is_class_d == 4) unions.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos));
 
                 else if (method_class_str != "")
                 {
@@ -677,14 +653,14 @@ void navigator_update(char *text, char *style, int length) {
                     {
                         if (classes[l].name == method_class_str)
                         {
-                            classes[l].children.push_back(Nav_entry(func_name, pos, func_type, func_args));
+                            classes[l].children.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                             class_dec_av = true;
                         }
                     }
                     if (!class_dec_av)
                     {
-                        Nav_entry tmp(method_class_str, pos);
-                        tmp.children.push_back(Nav_entry(func_name, pos, func_type, func_args));
+                        Fl_Dev_Code_Browser_Entry tmp(method_class_str, pos);
+                        tmp.children.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                         classes.push_back(tmp);
                     }
                 }
@@ -695,29 +671,29 @@ void navigator_update(char *text, char *style, int length) {
                         if (funs.size() > 0)
                         {
                             bool ins_done = false;
-                            for (deque <Nav_entry>::iterator it = funs.begin(); it != funs.end(); it++)
+                            for (deque <Fl_Dev_Code_Browser_Entry>::iterator it = funs.begin(); it != funs.end(); it++)
                             {
                                 if (nav_sort == 2 && it->name > func_name)
                                 {
-                                    funs.insert(it, Nav_entry(func_name, pos, func_type, func_args));
+                                    funs.insert(it, Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                                     ins_done = true;
                                     break;
                                 }
                                 else if (nav_sort == 1 && (func_type == "" || it->type > func_type))
                                 {
-                                    funs.insert(it, Nav_entry(func_name, pos, func_type, func_args));
+                                    funs.insert(it, Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                                     ins_done = true;
                                     break;
                                 }
 
                             }
-                            if (!ins_done) funs.push_back(Nav_entry(func_name, pos, func_type, func_args));
+                            if (!ins_done) funs.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                         }
                         else
-                            funs.push_back(Nav_entry(func_name, pos, func_type, func_args));
+                            funs.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                     }
                     else
-                        funs.push_back(Nav_entry(func_name, pos, func_type, func_args));
+                        funs.push_back(Fl_Dev_Code_Browser_Entry(func_name, pos, func_type, func_args));
                 }
 
             }
@@ -986,120 +962,6 @@ void add_nav_timeout_handler() {
 }
 
 
-/////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////
-// Editor window functions and class...
-
-
-
-Fl_Dev_Editor_Window::Fl_Dev_Editor_Window(int w, int h, const char* t) : Fl_Double_Window(w, h, t) {
-    replace_dlg = new Fl_Window(320, 105, "Replace");
-    replace_find = new Fl_Input(80, 10, 230, 25, "Find:");
-    replace_find->align(FL_ALIGN_LEFT);
-
-    replace_with = new Fl_Input(80, 40, 230, 25, "Replace:");
-    replace_with->align(FL_ALIGN_LEFT);
-
-    replace_all = new Fl_Button(5, 70, 95, 25, "Replace All");
-    replace_all->callback((Fl_Callback *)replall_cb, this);
-
-    replace_next = new Fl_Return_Button(105, 70, 120, 25, "Replace Next");
-    replace_next->callback((Fl_Callback *)replace2_cb, this);
-
-    replace_cancel = new Fl_Button(230, 70, 80, 25, "Cancel");
-    replace_cancel->callback((Fl_Callback *)replcan_cb, this);
-    replace_dlg->end();
-    replace_dlg->set_non_modal();
-    editor = 0;
-    *search = (char)0;
-}
-
-
-
-Fl_Dev_Editor_Window::~Fl_Dev_Editor_Window() {
-    delete replace_dlg;
-}
-
-
-
-void Fl_Dev_Editor_Window::draw() {
-    Fl_Double_Window::draw();
-}
-
-
-void Fl_Dev_Editor_Window::show_linenrs() {
-    if (line_nr_box->visible()) return;
-
-
-    te->resize(gwn->x() + line_nr_size, te->y(), gwn->w() - line_nr_size, te->h());
-    line_nr_box->resize(gwn->x(), te->y(), line_nr_size, te->h());
-    gwn->add(line_nr_box);
-    line_nr_box->show();
-
-    redraw();
-    Fl::check();
-}
-
-
-void Fl_Dev_Editor_Window::hide_linenrs() {
-    if (!line_nr_box->visible()) return;
-
-    gwn->remove(line_nr_box);
-    te->resize(gwn->x() + 1, te->y(), gwn->w() - 1, te->h());
-    //line_nr_box->resize(te->x()-line_nr_size,te->y(),line_nr_size,te->h());
-    line_nr_box->hide();
-    redraw();
-    Fl::check();
-}
-
-//shows the compiler-output-widget at the bottom
-void Fl_Dev_Editor_Window::show_output() {
-    if (output_grp->visible()) return;
-
-    Fl_Group *o = output_grp;
-    int he = o->h();
-
-    if (he > h() - 100) he = h() / 2;
-
-    tile->size(tile->w(), tile->h() - he);	//edited
-    //tabs->size(tabs->w(),h()-167); 	//edited
-    o->resize(0, tile->y() + tile->h() + 1, w(), he);
-    all_but_menu_grp->add(o);
-    //output->resize(output_grp->x(),output_grp->y()+4,output_grp->w(),output_grp->h()-6);
-    o->show();
-    Fl::check();
-}
-
-//hides the compiler-output-widget at the bottom
-void Fl_Dev_Editor_Window::hide_output() {
-    if (!output_grp->visible()) return;
-    //Fl_Text_Editor *o = output;
-    Fl_Group *o = output_grp;
-    all_but_menu_grp->remove(o);
-
-    //o->resize(0,tile->y() + tile->h()+1 ,w(),0);
-    o->hide();
-
-    tile->size(tile->w(), h() - 66);	//edited
-    //tabs->size(tabs->w(),h()-66);	//edited
-    //
-}
-
-
-//shows the project-/file-browser at the left
-void Fl_Dev_Editor_Window::show_browser() {
-    tabs->size(150, editor->h());
-    gwn->resize(tabs->w(), gwn->y(), gwn->w() - tabs->w(), gwn->h());
-    tabs->show();
-    gwn->redraw();
-    Fl::check();
-}
-
-//hides the project-/file-browser at the left
-void Fl_Dev_Editor_Window::hide_browser() {
-    gwn->resize(0, gwn->y(), w(), gwn->h());
-    tabs->hide();
-}
 
 
 
@@ -1288,7 +1150,7 @@ void save_file(const char *newfile) {
 
 void copy_cb(Fl_Widget*, void* v) {
     Fl_Dev_Editor_Window* e = window;
-    Fl_Text_Editor_ext::kf_copy(0, e->editor);
+    Fl_Dev_Code_Editor::kf_copy(0, e->editor);
     Fl::focus(e->editor);
 }
 
@@ -1296,7 +1158,7 @@ void copy_cb(Fl_Widget*, void* v) {
 
 void cut_cb(Fl_Widget*, void* v) {
     Fl_Dev_Editor_Window* e = window;
-    Fl_Text_Editor_ext::kf_cut(0, e->editor);
+    Fl_Dev_Code_Editor::kf_cut(0, e->editor);
     Fl::focus(e->editor);
 }
 
@@ -1304,13 +1166,13 @@ void cut_cb(Fl_Widget*, void* v) {
 
 void paste_cb(Fl_Widget*, void* v) {
     Fl_Dev_Editor_Window* e = window;
-    Fl_Text_Editor_ext::kf_paste(0, e->editor);
+    Fl_Dev_Code_Editor::kf_paste(0, e->editor);
     Fl::focus(e->editor);
 }
 
 void undo_cb(Fl_Widget*, void* v) {
     Fl_Dev_Editor_Window* e = window;
-    Fl_Text_Editor_ext::kf_undo(0, e->editor);
+    Fl_Dev_Code_Editor::kf_undo(0, e->editor);
     Fl::focus(e->editor);
 }
 
@@ -1447,7 +1309,7 @@ void xterm_cb(Fl_Widget* w, void* v) {
 
 
 void fluid_cb(Fl_Widget* w, void* v) {
-    FILE *ptr;
+
 #ifdef MSDOS
     system("fluid");
 #elif _WIN32
@@ -1459,6 +1321,7 @@ void fluid_cb(Fl_Widget* w, void* v) {
     wprocess(projectdir, 0);
     free(projectdir);
 #else  
+    FILE *ptr;
     ptr = _popen("fluid &", "r");
     _pclose(ptr);
 #endif
@@ -2475,8 +2338,6 @@ void show_nav_cb() {
     int y = browser_file_grp->parent()->y();
     int h = browser_file_grp->parent()->h();
 
-
-
     if (browser_nav_grp->visible())
     {
         menuitems[28].clear();
@@ -2529,7 +2390,7 @@ void pr_browser_cb(Fl_Widget* o, void*) {
 
 void file_browser_cb(Fl_Widget* o, void*) {
 
-    if (Fl::event_button() == 3)
+    if (Fl::event_button() == FL_RIGHT_MOUSE)
     {
         fb_pop_btn->popup();
     }
@@ -2626,8 +2487,8 @@ int ask_for_download() {
     {
         Fl::wait(5);
         FILE *ptr;
-        char command[1024];
-        char buf[1024];
+//        char command[1024];
+//        char buf[1024];
 
         ptr = fopen("p.sh", "w");
         fprintf(ptr, \
@@ -2719,7 +2580,7 @@ void load_config_file() {
     //cout << "Loading config file\t";
     char buf[255], file1[255], file2[255], file3[255], file4[255], pr1[255], pr2[255], pr3[255], pr4[255], scheme[255];
     memset(file1, '\0', 255); memset(file2, '\0', 255); memset(file3, '\0', 255); memset(file4, '\0', 255);
-    int x, y, w, h, sm_in, rp_al;
+    int x, y, w, h, rp_al, sm_in;
     int BUFSIZE = 255;
     char *homedir = getenv("HOME");
 #if defined(MSDOS ) || defined(_WIN32)
@@ -3193,9 +3054,9 @@ void recent_file_cb(Fl_Widget* w, void*) {
 
         if (newfile != NULL)
         {
-            char *slash;
-            slash = strrchr(path, '/');
-            *slash = '\0';
+            //char *slash;
+            //slash = strrchr(path, '/');
+            //*slash = '\0';
             load_file(newfile, -1);
             add_recent_file_to_menu(newfile);
         }
@@ -3648,7 +3509,7 @@ Fl_Window* make_form() {
         Fl_Tabs *ttab = new Fl_Tabs(output_grp->x(), output_grp->y() + 7, output_grp->w(), output_grp->h() - 6);
         Fl_Group *tgrp = new Fl_Group(output_grp->x(), output_grp->y() + 7 + 15, output_grp->w(), output_grp->h() - 6 - 15, "Output");
 
-        w->output = new My_Text_Editor2(tgrp->x(), tgrp->y(), tgrp->w(), tgrp->h());
+        w->output = new Fl_Dev_Code_Editor(tgrp->x(), tgrp->y(), tgrp->w(), tgrp->h());
         w->output->highlight_data(op_stylebuf, op_styletable,
                                   sizeof(op_styletable) / sizeof(op_styletable[0]),
                                   'A', style_unfinished_cb, 0);
@@ -3727,7 +3588,7 @@ Fl_Window* make_form() {
     line_nr_box->label("1\n2");
     w->line_nr_box = line_nr_box;
 
-    w->editor = new Fl_Text_Editor_ext(gwn->x() + line_nr_size, 50, w->w() - pr_browsersize - line_nr_size, 233);	//edited
+    w->editor = new Fl_Dev_Code_Editor(gwn->x() + line_nr_size, 50, w->w() - pr_browsersize - line_nr_size, 233);	//edited
     te = w->editor;
     w->editor->buffer(textbuf);
     w->editor->highlight_data(stylebuf, styletable,
@@ -3855,12 +3716,10 @@ Fl_Window* make_form() {
 
     w->end();
 
-
     textbuf->add_modify_callback(style_update, w->editor);
     textbuf->add_modify_callback(changed_cb, w);
     textbuf->call_modify_callbacks();
     textbuf->tab_distance(4);
-
 
     make_pref_form();
     make_proj_window();

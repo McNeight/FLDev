@@ -20,6 +20,7 @@
 
 #include "extras.h" 
 #include "Fl_Dev_Code_Browser.h"
+#include "Fl_Dev_Code_Editor.h"
 #include "highlight.h"
 #include "globals.h"
 
@@ -27,7 +28,7 @@
 Fl_Text_Buffer     *textbuf = 0;
 Fl_Text_Buffer     *stylebuf = 0;
 Fl_Text_Buffer		*op_stylebuf = 0;
-Fl_Text_Editor_ext 		*te;
+Fl_Dev_Code_Editor 		*te;
 
 
 
@@ -385,7 +386,7 @@ old_style_update(	int        pos,		// I - Position of update
 
 
   stylebuf->replace(start, end, style);
-  ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
+  ((Fl_Dev_Code_Editor *)cbArg)->redisplay_range(start, end);
 
   if ((last != style[end - start - 1]) || nDeleted || style[end - start - 1] == 'D') 
   if (last == 'C' || last == 'D') 
@@ -482,7 +483,7 @@ style_update(	int        pos,		// I - Position of update
 
 
   stylebuf->replace(start, end, style);
-  ((Fl_Text_Editor_ext *)cbArg)->redisplay_range(start, end);
+  ((Fl_Dev_Code_Editor *)cbArg)->redisplay_range(start, end);
 
   //if ((last != style[end - start - 1]) || nDeleted || style[end - start - 1] == 'D') 
   //if(update_count > 10)

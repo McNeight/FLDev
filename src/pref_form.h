@@ -24,7 +24,7 @@
 #include <FL/Fl.H>
 #include <FL/Fl_Native_File_Chooser.H>
 #include <FL/fl_show_colormap.H>
-#include "Fl_Dev_Util.h";
+#include "Fl_Dev_Util.h"
 #include "globals.h"
 extern void load_lang_cb(const char *file); 
 extern int text_size; 
