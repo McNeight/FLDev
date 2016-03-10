@@ -117,7 +117,7 @@ Fl_Group *output_grp;
 Fl_Tile *tile;
 deque <string> bakfiles;
 
-NavBrowser *navigator_browser;
+Fl_Dev_Code_Browser *navigator_browser;
 
 deque<Nav_entry> Nav_entry::children;
 
@@ -1572,19 +1572,20 @@ void open_cb(Fl_Widget*, void*) {
         return;
 
     const char *newfile = fnfc.filename();
-    char path[511];
+    // Don't use path, don't need path
+    //char path[511];
 
     if (newfile == "")
         return;
 
     if (newfile != NULL)
     {
-        strcpy(path, newfile);
-        char *slash;
-        slash = strrchr(path, '/');
-        *slash = '\0';
+        //strcpy(path, newfile);
+        //char *slash;
+        //slash = strrchr(path, '/');
+        //*slash = '\0';
         load_file(newfile, -1);
-        add_recent_file_to_menu(filename);
+        add_recent_file_to_menu(newfile);
     }
 }
 
@@ -3790,7 +3791,7 @@ Fl_Window* make_form() {
             navigator_pop_btn->add("Sort by Return Type", 0, nav_type_cb);
 
             //Fl_Hold_Browser *hb = new Fl_Hold_Browser(tt->x(),tg->y()+20,tg->w()-2,tg->h()-20);
-            NavBrowser *hb = new NavBrowser(tt->x(), tg->y() + 20, tg->w() - 2, tg->h() - 20);
+            Fl_Dev_Code_Browser *hb = new Fl_Dev_Code_Browser(tt->x(), tg->y() + 20, tg->w() - 2, tg->h() - 20);
             navigator_browser = hb;
             navigator_browser->textsize(12);
             navigator_browser->callback(navigator_browser_cb);

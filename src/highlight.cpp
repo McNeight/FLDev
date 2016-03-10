@@ -19,7 +19,7 @@
 
 
 #include "extras.h" 
-#include "NavBrowser.h"
+#include "Fl_Dev_Code_Browser.h"
 #include "highlight.h"
 #include "globals.h"
 

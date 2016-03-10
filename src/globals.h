@@ -45,7 +45,7 @@
 #include <FL/Fl_Menu_Button.H>
 
 #include "extras.h" 
-#include "NavBrowser.h" 
+#include "Fl_Dev_Code_Browser.h" 
 #include "pref_form.h"
 #include "proj_form.h"
 #include "proj_wiz_form.h"
@@ -102,7 +102,7 @@ extern Fl_Color background_color;
 
 
 extern bool cppfile;
-extern NavBrowser *navigator_browser;
+extern Fl_Dev_Code_Browser *navigator_browser;
 extern Fl_Group *browser_file_grp, *browser_nav_grp;
 
 
