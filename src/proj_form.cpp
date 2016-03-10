@@ -98,7 +98,14 @@ static void cb_pgui(Fl_Input*, void*) {
 }
 
 static void cb_add(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "");
+  Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("C & C++ Source Files\t*.{cpp,cxx,c,cc,CPP,CXX,C,CC}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -111,7 +118,14 @@ if (newfile != NULL)
 }
 
 static void cb_add1(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "");
+  Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("C & C++ Header Files\t*.{h|hpp|H|HPP}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -124,7 +138,14 @@ if (newfile != NULL)
 }
 
 static void cb_add2(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "");
+  Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("FLUID Files\t*.{fl,fd}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 

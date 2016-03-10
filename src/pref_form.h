@@ -3,10 +3,10 @@
 #ifndef pref_form_h
 #define pref_form_h
 #include <FL/Fl.H>
-#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Native_File_Chooser.H>
 #include <FL/fl_show_colormap.H>
-#include <stdio.h>
-extern void load_lang_cb(char *file); 
+#include "globals.h"
+extern void load_lang_cb(const char *file); 
 extern int text_size; 
 extern Fl_Color hl_plain;
 extern Fl_Color hl_linecomment;

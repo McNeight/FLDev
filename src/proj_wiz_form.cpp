@@ -10,7 +10,12 @@ Fl_Input *pr_dir_input=(Fl_Input *)0;
 Fl_Button *pr_wiz_browse_btn=(Fl_Button *)0;
 
 static void cb_pr_wiz_browse_btn(Fl_Button*, void*) {
-  pr_dir_input->value(fl_dir_chooser("Choose Directory",0,0));
+  Fl_Native_File_Chooser fnfc;
+fnfc.title("Choose Directory");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_DIRECTORY);
+if (fnfc.show())
+    return;
+pr_dir_input->value(fnfc.filename());
 }
 
 Fl_Input *pr_name_input=(Fl_Input *)0;
@@ -39,7 +44,14 @@ Fl_Round_Button *lib_shared=(Fl_Round_Button *)0;
 Fl_Input *pr_own_makefile=(Fl_Input *)0;
 
 static void cb_add(Fl_Button*, void*) {
-  char *newfile = fl_file_chooser("Select Makefile", "Make*.*", "");
+  Fl_Native_File_Chooser fnfc;
+fnfc.title("Select Makefile");
+fnfc.filter("Makefiles\tMake*.*");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -56,7 +68,7 @@ Fl_Check_Button *main_cpp_chk=(Fl_Check_Button *)0;
 Fl_Check_Button *own_make_chk=(Fl_Check_Button *)0;
 
 Fl_Double_Window* make_proj_wizard() {
-  { proj_wiz = new Fl_Double_Window(475, 260, "New Project");
+  { proj_wiz = new Fl_Double_Window(475, 260, "New Project Wizard");
     { pr_dir_input = new Fl_Input(130, 65, 275, 25, "Project Directory");
     } // Fl_Input* pr_dir_input
     { pr_wiz_browse_btn = new Fl_Button(415, 65, 35, 25, "...");
@@ -102,7 +114,7 @@ Fl_Double_Window* make_proj_wizard() {
       pr_own_makefile->hide();
       pr_own_makefile->deactivate();
     } // Fl_Input* pr_own_makefile
-    { Fl_Button* o = new Fl_Button(455, 170, 35, 25, "add");
+    { Fl_Button* o = new Fl_Button(325, 180, 35, 25, "add");
       o->callback((Fl_Callback*)cb_add);
       o->hide();
       o->deactivate();
@@ -116,6 +128,7 @@ Fl_Double_Window* make_proj_wizard() {
       own_make_chk->deactivate();
     } // Fl_Check_Button* own_make_chk
     proj_wiz->set_modal();
+    proj_wiz->size_range(475, 260);
     proj_wiz->end();
   } // Fl_Double_Window* proj_wiz
   return proj_wiz;

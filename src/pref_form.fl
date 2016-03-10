@@ -2,16 +2,16 @@
 version 1.0303 
 header_name {.h} 
 code_name {.cpp}
-decl {\#include <FL/Fl_File_Chooser.H>} {public local
+decl {\#include <FL/Fl_Native_File_Chooser.H>} {public local
 } 
 
 decl {\#include <FL/fl_show_colormap.H>} {public local
 } 
 
-decl {\#include <stdio.h>} {public local
+decl {\#include "globals.h"} {public local
 } 
 
-decl {void load_lang_cb(char *file);} {public local
+decl {void load_lang_cb(const char *file);} {public local
 } 
 
 decl {int text_size;} {public local
@@ -65,8 +65,8 @@ decl {int backup_file;} {public local
 Function {make_pref_form()} {open
 } {
   Fl_Window pref_window {
-    label Preferences open
-    xywh {2557 382 517 322} type Double align 5 modal visible
+    label Preferences open selected
+    xywh {2048 180 525 325} type Double align 5 modal visible
   } {
     Fl_Button pref_ok_btn {
       label OK
@@ -98,7 +98,7 @@ pref_window->hide();}
       xywh {5 5 515 285}
     } {
       Fl_Group ed_group {
-        label Editor open selected
+        label Editor open
         xywh {10 40 510 250}
       } {
         Fl_Box {} {
@@ -198,9 +198,16 @@ pref_window->hide();}
         }
         Fl_Button lang_btn {
           label {Load Language File}
-          callback {char *fname = fl_file_chooser("","*.lng","");
-if(fname==NULL) return;
-load_lang_cb(fname);}
+          callback {Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("FLDev Language Files\\t*.lng");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
+if(newfile==NULL) return;
+load_lang_cb(newfile);}
           xywh {155 145 180 25}
         }
         Fl_Output cur_lang_output {

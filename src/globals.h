@@ -24,7 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include <FL/Fl_Group.H>
 #include <FL/Fl_Double_Window.H>
 #include <FL/fl_ask.H>
-#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Native_File_Chooser.H>
 #include <FL/Fl_Menu_Bar.H> 
 #include <FL/Fl_Input.H>
 #include <FL/Fl_Tabs.H>
@@ -47,12 +47,12 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 
 void set_title(Fl_Window* w);
-void add_recent_file_to_menu(char *filename);
-void add_recent_project_to_menu(char *filename);
+void add_recent_file_to_menu(const char *filename);
+void add_recent_project_to_menu(const char *filename);
 void save_config_file();
 void set_text_size(int t);
 int check_save();
-int load_file(char *,int);
+int load_file(const char *, int);
 void replace_text_in_menu(int index, char *newtext);
 void removebackupfiles();
 void add_nav_timeout_handler();
@@ -87,13 +87,13 @@ extern Fl_Text_Editor_ext 		*te;
 //Editor colors
 extern Fl_Color hl_plain;
 extern Fl_Color hl_linecomment;
-extern Fl_Color hl_blockcomment ;
-extern Fl_Color hl_string ;
-extern Fl_Color hl_directive ;
-extern Fl_Color hl_type ;
-extern Fl_Color hl_keyword ;
-extern Fl_Color hl_character ;
-extern Fl_Color background_color ;
+extern Fl_Color hl_blockcomment;
+extern Fl_Color hl_string;
+extern Fl_Color hl_directive;
+extern Fl_Color hl_type;
+extern Fl_Color hl_keyword;
+extern Fl_Color hl_character;
+extern Fl_Color background_color;
 
 
 extern bool cppfile;
@@ -112,6 +112,7 @@ extern const char         *code_types[];
 #define STR_MSG_SIZE 20
 extern std::string strmsg[STR_MSG_SIZE];
 
-
+#define FL_MENU_RECENT_FILES 4
+#define FL_MENU_RECENT_PROJECTS 48
 
 #endif

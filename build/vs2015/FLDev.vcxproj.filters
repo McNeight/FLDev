@@ -68,9 +68,6 @@
     <ClInclude Include="..\..\src\highlight.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\src\icon_pixmaps.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\..\src\NavBrowser.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -81,6 +78,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\proj_wiz_form.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\icons\icon_pixmaps.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

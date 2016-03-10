@@ -12,7 +12,7 @@ Function {make_proj_window()} {open
 } {
   Fl_Window project_options_window {
     label {Project Options} open selected
-    xywh {2550 180 410 370} type Double modal visible
+    xywh {2048 180 410 370} type Double modal visible
   } {
     Fl_Tabs pr_op_tabs {open
       xywh {5 5 400 291}
@@ -54,7 +54,7 @@ Function {make_proj_window()} {open
       }
       Fl_Group pr_op_cl_grp {
         label {Compiler and Linker} open
-        xywh {5 35 400 260} hide
+        xywh {5 35 400 260}
       } {
         Fl_Input plib {
           label Libraries
@@ -84,7 +84,7 @@ Function {make_proj_window()} {open
       }
       Fl_Group pr_op_fi_grp {
         label Files open
-        xywh {5 35 400 260}
+        xywh {5 35 400 260} hide
       } {
         Fl_Input psrc {
           label Sources
@@ -103,7 +103,14 @@ Function {make_proj_window()} {open
         }
         Fl_Button {} {
           label add
-          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{cpp,cxx,c,cc,CPP,CXX,C,CC}", "");
+          callback {Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("C & C++ Source Files\\t*.{cpp,cxx,c,cc,CPP,CXX,C,CC}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -117,7 +124,14 @@ if (newfile != NULL)
         }
         Fl_Button {} {
           label add
-          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{h|hpp|H|HPP}", "");
+          callback {Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("C & C++ Header Files\\t*.{h|hpp|H|HPP}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 
@@ -131,7 +145,14 @@ if (newfile != NULL)
         }
         Fl_Button {} {
           label add
-          callback {char *newfile = fl_file_chooser(strmsg[3].c_str(), "*.{fl,f}", "");
+          callback {Fl_Native_File_Chooser fnfc;
+fnfc.title(strmsg[3].c_str());
+fnfc.filter("FLUID Files\\t*.{fl,fd}");
+fnfc.type(Fl_Native_File_Chooser::BROWSE_FILE);
+if (fnfc.show())
+    return;
+
+const char *newfile = fnfc.filename();
 
 if(newfile=="") return;
 if (newfile != NULL) 

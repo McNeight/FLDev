@@ -4,7 +4,7 @@
 #define proj_wiz_form_h
 #include <FL/Fl.H>
 #include "globals.h"
-#include <FL/Fl_File_Chooser.H>
+#include <FL/Fl_Native_File_Chooser.H>
 extern bool pr_wiz_ok; 
 #include <FL/Fl_Double_Window.H>
 extern Fl_Double_Window *proj_wiz;
