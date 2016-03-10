@@ -1,7 +1,35 @@
 # data file for the Fltk User Interface Designer (fluid)
 version 1.0303 
+use_FL_COMMAND 
 header_name {.h} 
-code_name {.cpp}
+code_name {.cxx}
+comment {/*
+    FLDev - FLTK Integrated Development Environment
+    Copyright (C) 2005-2016  Philipp Pracht, Georg Potthast, Neil McNeight
+
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+*/
+} {selected in_source in_header
+} 
+
+decl {\#include "Fl_Dev_I18N.h";} {public local
+} 
+
+decl {\#include "Fl_Dev_Util.h";} {public local
+} 
+
 decl {\#include "globals.h"} {public local
 } 
 
@@ -11,8 +39,8 @@ decl {int pr_changed;} {public local
 Function {make_proj_window()} {open
 } {
   Fl_Window project_options_window {
-    label {Project Options} open selected
-    xywh {2048 180 410 370} type Double modal visible
+    label {Project Options} open
+    xywh {2048 188 410 370} type Double modal size_range {410 370 0 0} visible
   } {
     Fl_Tabs pr_op_tabs {open
       xywh {5 5 400 291}

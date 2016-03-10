@@ -167,11 +167,15 @@
     <ClCompile Include="..\..\src\build_tools.cpp" />
     <ClCompile Include="..\..\src\editor.cpp" />
     <ClCompile Include="..\..\src\extras.cpp" />
+    <ClCompile Include="..\..\src\Fl_Dev_File_History.cxx" />
+    <ClCompile Include="..\..\src\Fl_Dev_I18N.cxx" />
+    <ClCompile Include="..\..\src\Fl_Dev_Project.cxx" />
+    <ClCompile Include="..\..\src\Fl_Dev_Util.cxx" />
     <ClCompile Include="..\..\src\highlight.cpp" />
     <ClCompile Include="..\..\src\NavBrowser.cpp" />
-    <ClCompile Include="..\..\src\pref_form.cpp" />
-    <ClCompile Include="..\..\src\proj_form.cpp" />
-    <ClCompile Include="..\..\src\proj_wiz_form.cpp" />
+    <ClCompile Include="..\..\src\pref_form.cxx" />
+    <ClCompile Include="..\..\src\proj_form.cxx" />
+    <ClCompile Include="..\..\src\proj_wiz_form.cxx" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\src\pref_form.fl" />
@@ -181,8 +185,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\build_tools.h" />
-    <ClInclude Include="..\..\src\EditorWindow.h" />
+    <ClInclude Include="..\..\src\Fl_Dev_Editor_Window.h" />
     <ClInclude Include="..\..\src\extras.h" />
+    <ClInclude Include="..\..\src\Fl_Dev_File_History.h" />
+    <ClInclude Include="..\..\src\Fl_Dev_I18N.h" />
+    <ClInclude Include="..\..\src\Fl_Dev_Project.h" />
+    <ClInclude Include="..\..\src\Fl_Dev_Util.h" />
     <ClInclude Include="..\..\src\globals.h" />
     <ClInclude Include="..\..\src\highlight.h" />
     <ClInclude Include="..\..\src\icons\icon_pixmaps.h" />

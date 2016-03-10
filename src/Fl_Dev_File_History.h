@@ -17,10 +17,27 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef BUILD_TOOLS_H
-#define BUILD_TOOLS_H
+#ifndef Fl_Dev_File_History_H
+#define Fl_Dev_File_History_H
 
-void generate_makefile_cb();
+#pragma once
 
-#endif
+#include <string>
+#include <deque>
 
+class Fl_Dev_File_History {
+public:
+    class item {
+    public:
+        std::string name;
+        int position;
+    };
+
+    std::deque<item> items;
+
+    void add(std::string fname, int pos);
+
+    int getPosition(std::string fname);
+};
+
+#endif // Fl_Dev_File_History_H

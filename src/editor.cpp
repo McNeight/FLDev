@@ -1,9 +1,23 @@
-/////////////////////////////////////////////////////////////////////////////////////////
 /*
-        FLDev
+    FLDev - FLTK Integrated Development Environment
+    Copyright (C) 2005-2016  Philipp Pracht, Georg Potthast, Neil McNeight
 
-        Lightweight Integrated Development Environment
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+
 #if MSDOS
 #define VERSION 	"130_DOS-1.5.8"
 #elif _WIN32
@@ -11,31 +25,6 @@
 #else
 #define VERSION 	"130_x11-1.5.8"
 #endif
-/*		author:		Philipp Pracht
-        email:		pracht@informatik.uni-muenchen.de
-
-        descr.:	FLDev is a IDE designed for older systems and small C/C++ Applications
-                and is based on the	Editor described in the FLTK Manual.
-
-
-        This program is free software; you can redistribute it and/or
-        modify it under the terms of the GNU General Public License
-        as published by the Free Software Foundation; either version 2
-        of the License, or (at your option) any later version.
-
-        This program is distributed in the hope that it will be useful,
-        but WITHOUT ANY WARRANTY; without even the implied warranty of
-        MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-        GNU General Public License for more details.
-
-        You should have received a copy of the GNU General Public License
-        along with this program; if not, write to the Free Software
-        Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
-*/
-/////////////////////////////////////////////////////////////////////////////////////////////
-
-
-
 
 // TODO:
 /*
@@ -61,7 +50,7 @@
 #include <unistd.h>
 #include <X11/xpm.h>
 #endif
-#include "icon_pixmaps.h"
+#include "icons/icon_pixmaps.h"
 #include "globals.h"
 
 #ifdef __MWERKS__ 
@@ -93,8 +82,11 @@ FOR_NANOLINUX
 
 #include "highlight.h"
 #include "build_tools.h"
-#include "EditorWindow.h"
-
+#include "Fl_Dev_Editor_Window.h"
+#include "Fl_Dev_File_History.h"
+#include "Fl_Dev_I18N.h"
+#include "Fl_Dev_Project.h"
+#include "Fl_Dev_Util.h"
 
 using namespace std;
 
@@ -115,11 +107,11 @@ int line_nr_size = 50;
 
 
 Fl_Text_Buffer *outputtb = 0;
-Project project;
-File_History *file_hist;
+Fl_Dev_Project project;
+Fl_Dev_File_History *file_hist;
 Fl_Menu_Bar* menubar;
 Fl_Help_Dialog *help_dialog;
-EditorWindow* window;
+Fl_Dev_Editor_Window* window;
 Fl_Group *smartbar;
 Fl_Group *output_grp;
 Fl_Tile *tile;
@@ -167,45 +159,6 @@ enum				// Data opcodes
     VERTEX			// Followed by scaled X,Y
 };
 
-//the strings that are translated
-//Main Mode
-string file_str = "File",
-mod_str = "modified",
-insert_str = "INSERT",
-overwrite_str = "OVERWRITE",
-row_str = "row",
-col_str = "col",
-cancel_str = "Cancel",
-save_str = "Save",
-discard_str = "Discard";
-
-string strmsg[STR_MSG_SIZE];
-string line_label_str;
-
-void init_strings() {
-    strmsg[0] = "Cpp-Reference not found!\nDo you want to download?";
-    strmsg[1] = "The current file has not been saved.\nWould you like to save it now?";
-    strmsg[2] = "The current Project has not been saved.\nWould you like to save it now?";
-    strmsg[3] = "Open file";
-    strmsg[4] = "Insert file";
-    strmsg[5] = "Open Project File";
-    strmsg[6] = "Rebuild Makefile?";
-    strmsg[7] = "Save File As?";
-    strmsg[8] = "Search String";
-    strmsg[9] = "Replaced %d occurrences.";
-    strmsg[10] = "You have to restart FLDev!";
-    strmsg[11] = "Error reading from file";
-    strmsg[12] = "Error writing to file";
-    strmsg[13] = "Program already running!";
-    strmsg[14] = "Name of executable file not defined.\nCheck project options!";
-    strmsg[15] = "No occurrences of \'%s\' found!";
-    strmsg[16] = "Error reading config file!";
-    strmsg[17] = "Project File not found!";
-}
-
-string get_load_err_msg() {
-    return strmsg[17];
-}
 
 //callback functions
 void owbt_callback(Fl_Widget*, void*);
@@ -1039,7 +992,7 @@ void add_nav_timeout_handler() {
 
 
 
-EditorWindow::EditorWindow(int w, int h, const char* t) : Fl_Double_Window(w, h, t) {
+Fl_Dev_Editor_Window::Fl_Dev_Editor_Window(int w, int h, const char* t) : Fl_Double_Window(w, h, t) {
     replace_dlg = new Fl_Window(320, 105, "Replace");
     replace_find = new Fl_Input(80, 10, 230, 25, "Find:");
     replace_find->align(FL_ALIGN_LEFT);
@@ -1063,18 +1016,18 @@ EditorWindow::EditorWindow(int w, int h, const char* t) : Fl_Double_Window(w, h,
 
 
 
-EditorWindow::~EditorWindow() {
+Fl_Dev_Editor_Window::~Fl_Dev_Editor_Window() {
     delete replace_dlg;
 }
 
 
 
-void EditorWindow::draw() {
+void Fl_Dev_Editor_Window::draw() {
     Fl_Double_Window::draw();
 }
 
 
-void EditorWindow::show_linenrs() {
+void Fl_Dev_Editor_Window::show_linenrs() {
     if (line_nr_box->visible()) return;
 
 
@@ -1088,7 +1041,7 @@ void EditorWindow::show_linenrs() {
 }
 
 
-void EditorWindow::hide_linenrs() {
+void Fl_Dev_Editor_Window::hide_linenrs() {
     if (!line_nr_box->visible()) return;
 
     gwn->remove(line_nr_box);
@@ -1100,7 +1053,7 @@ void EditorWindow::hide_linenrs() {
 }
 
 //shows the compiler-output-widget at the bottom
-void EditorWindow::show_output() {
+void Fl_Dev_Editor_Window::show_output() {
     if (output_grp->visible()) return;
 
     Fl_Group *o = output_grp;
@@ -1118,7 +1071,7 @@ void EditorWindow::show_output() {
 }
 
 //hides the compiler-output-widget at the bottom
-void EditorWindow::hide_output() {
+void Fl_Dev_Editor_Window::hide_output() {
     if (!output_grp->visible()) return;
     //Fl_Text_Editor *o = output;
     Fl_Group *o = output_grp;
@@ -1134,7 +1087,7 @@ void EditorWindow::hide_output() {
 
 
 //shows the project-/file-browser at the left
-void EditorWindow::show_browser() {
+void Fl_Dev_Editor_Window::show_browser() {
     tabs->size(150, editor->h());
     gwn->resize(tabs->w(), gwn->y(), gwn->w() - tabs->w(), gwn->h());
     tabs->show();
@@ -1143,7 +1096,7 @@ void EditorWindow::show_browser() {
 }
 
 //hides the project-/file-browser at the left
-void EditorWindow::hide_browser() {
+void Fl_Dev_Editor_Window::hide_browser() {
     gwn->resize(0, gwn->y(), w(), gwn->h());
     tabs->hide();
 }
@@ -1334,7 +1287,7 @@ void save_file(const char *newfile) {
 
 
 void copy_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     Fl_Text_Editor_ext::kf_copy(0, e->editor);
     Fl::focus(e->editor);
 }
@@ -1342,7 +1295,7 @@ void copy_cb(Fl_Widget*, void* v) {
 
 
 void cut_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     Fl_Text_Editor_ext::kf_cut(0, e->editor);
     Fl::focus(e->editor);
 }
@@ -1350,13 +1303,13 @@ void cut_cb(Fl_Widget*, void* v) {
 
 
 void paste_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     Fl_Text_Editor_ext::kf_paste(0, e->editor);
     Fl::focus(e->editor);
 }
 
 void undo_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     Fl_Text_Editor_ext::kf_undo(0, e->editor);
     Fl::focus(e->editor);
 }
@@ -1514,7 +1467,7 @@ void fluid_cb(Fl_Widget* w, void* v) {
 
 
 void find_cb(Fl_Widget* w, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     const char *val;
     val = fl_input((strmsg[8] + ":").c_str(), e->search);
     if (val != NULL)
@@ -1527,8 +1480,8 @@ void find_cb(Fl_Widget* w, void* v) {
 
 
 void find2_cb(Fl_Widget* w, void* v) {
-    EditorWindow* e = (EditorWindow*)v;
-    //  EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = (Fl_Dev_Editor_Window*)v;
+    //  Fl_Dev_Editor_Window* e = window;
 
     if (e->search[0] == '\0')
     {
@@ -1573,14 +1526,14 @@ void set_title(Fl_Window* w) {
     if (!project.assigned) sprintf(title, "FLDev %s    %s", VERSION, temp_title);
     else sprintf(title, "FLDev %s    %s: %s  %s: %s", VERSION, window->tabs->child(0)->label(), project.name.c_str(), file_str.c_str(), temp_title);
     sprintf(filename_wo_path, "%s", temp_title);
-    ((EditorWindow *)w)->label(title);
+    ((Fl_Dev_Editor_Window *)w)->label(title);
 }
 
 
 
 
 void changed_cb(int, int nInserted, int nDeleted, int, const char*, void* v) {
-    EditorWindow *w = (EditorWindow *)v;
+    Fl_Dev_Editor_Window *w = (Fl_Dev_Editor_Window *)v;
     if ((nInserted || nDeleted) && !loading)
     {
         bufchanged = 1;
@@ -1646,7 +1599,7 @@ void insert_cb(Fl_Widget*, void *v) {
     const char *newfile = fnfc.filename();
     if (newfile != NULL)
     {
-        EditorWindow *w = (EditorWindow *)v;
+        Fl_Dev_Editor_Window *w = (Fl_Dev_Editor_Window *)v;
         load_file(newfile, w->editor->insert_position());
     }
 }
@@ -1689,12 +1642,12 @@ void quit_cb(Fl_Widget*, void*) {
 }
 
 void replace_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = (EditorWindow*)v;
+    Fl_Dev_Editor_Window* e = (Fl_Dev_Editor_Window*)v;
     e->replace_dlg->show();
 }
 
 void replace2_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     const char *find = e->replace_find->value();
     const char *replace = e->replace_with->value();
 
@@ -1724,7 +1677,7 @@ void replace2_cb(Fl_Widget*, void* v) {
 }
 
 void replall_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = (EditorWindow*)v;
+    Fl_Dev_Editor_Window* e = (Fl_Dev_Editor_Window*)v;
     const char *find = e->replace_find->value();
     const char *replace = e->replace_with->value();
 
@@ -1764,7 +1717,7 @@ void replall_cb(Fl_Widget*, void* v) {
 }
 
 void replcan_cb(Fl_Widget*, void* v) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     e->replace_dlg->hide();
 }
 
@@ -1797,7 +1750,7 @@ void saveas_cb() {
 
 
 void make_(Fl_Widget* w, void* v, int mode) {
-    EditorWindow* e = window;
+    Fl_Dev_Editor_Window* e = window;
     FILE *ptr;
     Fl_Text_Editor *o = e->output;
     char buf[255];
@@ -3510,7 +3463,7 @@ void tile_resize(Fl_Widget *w, void *v) {
 
 
 Fl_Window* make_form() {
-    EditorWindow* w = new EditorWindow(800, 600, title);
+    Fl_Dev_Editor_Window* w = new Fl_Dev_Editor_Window(800, 600, title);
     window = w;
     int pr_browsersize = 180;
     //int tabs_size = 150;
@@ -3955,8 +3908,8 @@ void load_default_icons(void) {
 
 }
 
-//void update_line_nrs(EditorWindow* window, int oldzeile, int oldspalte, int old_ins_mode, int old_first_line, int old_last_line){
-//void update_line_nrs(EditorWindow* window){       
+//void update_line_nrs(Fl_Dev_Editor_Window* window, int oldzeile, int oldspalte, int old_ins_mode, int old_first_line, int old_last_line){
+//void update_line_nrs(Fl_Dev_Editor_Window* window){       
 void update_line_nrs(void*) {
 
     if (!window->visible()) return;
@@ -4033,7 +3986,7 @@ int main(int argc, char **argv) {
     //Fl_File_Icon::load_system_icons();
     load_default_icons();
 
-    window = (EditorWindow*)make_form();
+    window = (Fl_Dev_Editor_Window*)make_form();
 #ifndef _WIN32  
     window->icon((char *)p);
 #else
@@ -4052,7 +4005,7 @@ int main(int argc, char **argv) {
 
     init_strings();
 
-    file_hist = new File_History();
+    file_hist = new Fl_Dev_File_History();
     text_size = 12;
     load_config_file();
 

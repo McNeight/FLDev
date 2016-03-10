@@ -17,10 +17,31 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef BUILD_TOOLS_H
-#define BUILD_TOOLS_H
+#ifndef Fl_Dev_I18N_H
+#define Fl_Dev_I18N_H
 
-void generate_makefile_cb();
+#pragma once
 
-#endif
+#include <string>
 
+#define STR_MSG_SIZE 20
+
+//the strings that are translated
+//Main Mode
+extern std::string  file_str,
+                    mod_str,
+                    insert_str,
+                    overwrite_str,
+                    row_str,
+                    col_str,
+                    cancel_str,
+                    save_str,
+                    discard_str;
+
+extern std::string strmsg[STR_MSG_SIZE];
+extern std::string line_label_str;
+
+void init_strings();
+std::string get_load_err_msg();
+
+#endif // Fl_Dev_I18N_H

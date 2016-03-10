@@ -17,10 +17,36 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef BUILD_TOOLS_H
-#define BUILD_TOOLS_H
+#include "Fl_Dev_File_History.h"
 
-void generate_makefile_cb();
+void Fl_Dev_File_History::add(std::string fname, int pos) {
+    bool found = false;
 
-#endif
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (items[i].name == fname)
+        {
+            items[i].position = pos;
+            found = true;
+            //cout << "Found old, added new pos:" << pos << endl;
+            break;
+        }
+    }
 
+    if (!found)
+    {
+        item i;
+        i.name = fname;
+        i.position = pos;
+        items.push_back(i);
+        //cout << "Found nothing, added new item:" << pos << endl;
+    }
+}
+
+int Fl_Dev_File_History::getPosition(std::string fname) {
+    for (int i = 0; i < items.size(); i++)
+    {
+        if (strcmp(items[i].name.c_str(), fname.c_str()) == 0) return items[i].position;
+    }
+    return 0;
+}

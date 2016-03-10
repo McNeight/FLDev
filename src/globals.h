@@ -1,22 +1,27 @@
 /*
-This program is free software; you can redistribute it and/or
-modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation; either version 2
-of the License, or (at your option) any later version.
+    FLDev - FLTK Integrated Development Environment
+    Copyright (C) 2005-2016  Philipp Pracht, Georg Potthast, Neil McNeight
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
+    This program is free software; you can redistribute it and/or
+    modify it under the terms of the GNU General Public License
+    as published by the Free Software Foundation; either version 2
+    of the License, or (at your option) any later version.
 
-You should have received a copy of the GNU General Public License
-along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
+
+
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-
+#pragma once
 
 #include <FL/Fl.H>
 #include <FL/x.H>
@@ -59,17 +64,17 @@ void add_nav_timeout_handler();
 
 Fl_Window* make_form();
 
-class EditorWindow;
-class Project;
+class Fl_Dev_Editor_Window;
+class Fl_Dev_Project;
 class Fl_Text_Editor_ext;
 
 extern Fl_Text_Buffer *outputtb;
 extern char filename[256];
-extern Project project;
-extern EditorWindow* window;
+extern Fl_Dev_Project project;
+extern Fl_Dev_Editor_Window* window;
 /*
 Project project;
-File_History *file_hist;
+Fl_Dev_File_History *file_hist;
 Fl_Menu_Bar* menubar;
 Fl_Help_Dialog *help_dialog;
 Fl_Group *smartbar;
@@ -108,9 +113,6 @@ extern Fl_Text_Display::Style_Table_Entry styletable[];
 
 extern const char         *code_keywords[];
 extern const char         *code_types[];
-
-#define STR_MSG_SIZE 20
-extern std::string strmsg[STR_MSG_SIZE];
 
 #define FL_MENU_RECENT_FILES 4
 #define FL_MENU_RECENT_PROJECTS 48

@@ -17,10 +17,17 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 */
 
-#ifndef BUILD_TOOLS_H
-#define BUILD_TOOLS_H
+#ifndef Fl_Dev_Util_H
+#define Fl_Dev_Util_H
 
-void generate_makefile_cb();
+#pragma once
 
-#endif
+#include <string>
 
+std::string trim(std::string const& source, const char* delims = " \t\r\n");
+
+#ifdef _WIN32
+char *strsep(char **from, const char *delim);
+#endif // _WIN32
+
+#endif // Fl_Dev_Util_H

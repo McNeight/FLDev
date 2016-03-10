@@ -1,5 +1,3 @@
-#include "NavBrowser.h" 
-
 //
 // "$Id: NavBrowser.cxx,v 1.9.2.12.2.8 2003/01/30 21:41:24 easysw Exp $"
 //
